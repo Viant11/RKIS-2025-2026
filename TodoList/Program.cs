@@ -20,7 +20,7 @@
         
         static void Second(string[] args)
         {
-            string[] todos = { };
+            string[] todos = { "help", "profile", "add", "view", "exit" };
             
             while(true)
             {
