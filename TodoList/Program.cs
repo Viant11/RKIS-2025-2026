@@ -20,7 +20,13 @@
         
         static void Second(string[] args)
         {
-            string[] todos;
+            string[] todos = { };
+            
+            while(true)
+            {
+
+
+            }
         }
     
     } 
