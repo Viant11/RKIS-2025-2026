@@ -17,5 +17,11 @@
             int age = CurrentDate - number;
             Console.WriteLine("Добавлен пользователь" + " " + Name + " " + Surname + " " + "возраст - " + age);
         }
-    }
+        
+        static void Second(string[] args)
+        {
+            string[] todos;
+        }
+    
+    } 
 }
