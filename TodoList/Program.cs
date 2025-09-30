@@ -1,4 +1,6 @@
-﻿namespace TodoList
+﻿using System.Data;
+
+namespace TodoList
 {
     internal class Program
     {
@@ -13,19 +15,42 @@
             string date = Console.ReadLine();
             int number = int.Parse(date);
             string Date = DateTime.Now.ToString("yyyy");
-            int CurrentDate = int.Parse(Date); ;
+            int CurrentDate = int.Parse(Date);
             int age = CurrentDate - number;
             Console.WriteLine("Добавлен пользователь" + " " + Name + " " + Surname + " " + "возраст - " + age);
-        }
-        
-        static void Second(string[] args)
-        {
+
+
             string[] todos = { "help", "profile", "add", "view", "exit" };
-            
-            while(true)
+            bool Running = true;
+
+            todos[1] = "profile - выводит данные о пользаветеле";
+            todos[2] = "add - добавляет новую задачу";
+            todos[3] = "view - выводит все задачи из массива";
+            todos[4] = "exit - завершает цикл и останавливает выполнение программы";
+
+            Console.WriteLine("Введите команду help для просмотра всех команд.");
+
+            while (Running)
             {
 
+                string userInput = Console.ReadLine();
 
+                switch (userInput)
+                {
+                    case "help":
+                        Console.WriteLine("Доступные команды: ");
+                        Console.WriteLine(todos[1]);
+                        Console.WriteLine(todos[2]);
+                        Console.WriteLine(todos[3]);
+                        Console.WriteLine(todos[4]);
+                        break;
+
+                    default:
+                        Console.WriteLine("Неизвестная команда. Введите команду help для просмотра доступных команд");
+                        break;
+                    
+                }
+            
             }
         }
     
