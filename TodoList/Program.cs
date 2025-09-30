@@ -45,6 +45,13 @@ namespace TodoList
                         Console.WriteLine(todos[4]);
                         break;
 
+                    case "profile":
+                        Console.WriteLine("Данные пользователя:");
+                        Console.WriteLine($"Имя:{Name}");
+                        Console.WriteLine($"Фамилия:{Surname}");
+                        Console.WriteLine($"Возраст:{age}");
+                        break;
+
                     default:
                         Console.WriteLine("Неизвестная команда. Введите команду help для просмотра доступных команд");
                         break;
