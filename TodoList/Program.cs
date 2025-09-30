@@ -71,7 +71,7 @@ namespace TodoList
                     case "view":
                         if (string.IsNullOrEmpty(tasks))
                         {
-                            Console.WriteLine("Список задач пуст");
+                            Console.WriteLine("Список задач пуст.");
                         }
                         else
                         {
@@ -82,6 +82,11 @@ namespace TodoList
                                 Console.WriteLine($"{i + 1}. {tasksGroup[i]}");
                             }
                         }
+                        break;
+
+                    case "exit":
+                        Running = false;
+                        Console.WriteLine("Программа завершена.");
                         break;
 
                     default:
