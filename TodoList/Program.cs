@@ -22,6 +22,7 @@ namespace TodoList
 
             string[] todos = { "help", "profile", "add", "view", "exit" };
             bool Running = true;
+            string tasks = "";
 
             todos[1] = "profile - выводит данные о пользаветеле";
             todos[2] = "add - добавляет новую задачу";
@@ -52,7 +53,22 @@ namespace TodoList
                         Console.WriteLine($"Возраст:{age}");
                         break;
 
-                    default:
+                    case "add":
+                        Console.WriteLine("Введи задачу которую хотите добавить:");
+                        string Newtask = Console.ReadLine();
+
+                        if (string.IsNullOrEmpty(tasks))
+                        {
+                            tasks = Newtask;
+                        }
+                        else
+                        {
+                            tasks += "|" + Newtask; 
+                        }
+                        Console.WriteLine("Задача добавлена!");
+                        break;
+
+                            default:
                         Console.WriteLine("Неизвестная команда. Введите команду help для просмотра доступных команд");
                         break;
                     
