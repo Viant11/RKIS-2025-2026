@@ -68,7 +68,23 @@ namespace TodoList
                         Console.WriteLine("Задача добавлена!");
                         break;
 
-                            default:
+                    case "view":
+                        if (string.IsNullOrEmpty(tasks))
+                        {
+                            Console.WriteLine("Список задач пуст");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Все задачи:");
+                            string[] tasksGroup = tasks.Split("|");
+                            for (int i = 0; i < tasksGroup.Length; i++)
+                            {
+                                Console.WriteLine($"{i + 1}. {tasksGroup[i]}");
+                            }
+                        }
+                        break;
+
+                    default:
                         Console.WriteLine("Неизвестная команда. Введите команду help для просмотра доступных команд");
                         break;
                     
