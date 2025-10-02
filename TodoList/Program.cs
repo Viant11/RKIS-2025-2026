@@ -22,13 +22,16 @@ namespace TodoList
 
             string[] todos = { "help", "profile", "add", "view", "exit" };
             bool Running = true;
-            string tasks = "";
 
-            todos[1] = "profile - выводит данные о пользаветеле";
+            string taskString = "";
+            string[] tasks = new string[2];
+            int taskCount = 0;
+
+            todos[1] = "profile - выводит данные о пользователе";
             todos[2] = "add - добавляет новую задачу";
             todos[3] = "view - выводит все задачи из массива";
             todos[4] = "exit - завершает цикл и останавливает выполнение программы";
-
+         
             Console.WriteLine("Введите команду help для просмотра всех команд.");
 
             while (Running)
@@ -57,26 +60,44 @@ namespace TodoList
                         Console.WriteLine("Введи задачу которую хотите добавить:");
                         string Newtask = Console.ReadLine();
 
-                        if (string.IsNullOrEmpty(tasks))
+                        if (taskCount >= tasks.Length)
                         {
-                            tasks = Newtask;
+                            string[] newTasks = new string[tasks.Length * 2];
+
+                            for (int i = 0; i < tasks.Length; i++)
+                            {
+                                newTasks[i] = tasks[i];
+                            }
+
+                            tasks = newTasks;
+                            Console.WriteLine($"Массив расширен до {tasks.Length} элементов");
+                        }
+
+
+                        tasks[taskCount] = Newtask;
+                        taskCount++;
+
+                        if (string.IsNullOrEmpty(taskString))
+                        {
+                            taskString = Newtask;
                         }
                         else
                         {
-                            tasks += "|" + Newtask; 
+                            taskString += "|" + Newtask; 
                         }
+
                         Console.WriteLine("Задача добавлена!");
                         break;
 
                     case "view":
-                        if (string.IsNullOrEmpty(tasks))
+                        if (string.IsNullOrEmpty(taskString))
                         {
                             Console.WriteLine("Список задач пуст.");
                         }
                         else
                         {
                             Console.WriteLine("Все задачи:");
-                            string[] tasksGroup = tasks.Split("|");
+                            string[] tasksGroup = taskString.Split("|");
                             for (int i = 0; i < tasksGroup.Length; i++)
                             {
                                 Console.WriteLine($"{i + 1}. {tasksGroup[i]}");
