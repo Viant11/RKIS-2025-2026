@@ -20,17 +20,9 @@ namespace TodoList
             Console.WriteLine("Добавлен пользователь" + " " + Name + " " + Surname + " " + "возраст - " + age);
 
 
-            string[] todos = { "help", "profile", "add", "view", "exit" };
+            string[] todos = new string[2];
             bool isRunning = true;
-
-            string taskString = "";
-            string[] tasks = new string[2];
             int taskCount = 0;
-
-            todos[1] = "profile - выводит данные о пользователе";
-            todos[2] = "add - добавляет новую задачу";
-            todos[3] = "view - выводит все задачи из массива";
-            todos[4] = "exit - завершает цикл и останавливает выполнение программы";
 
             Console.WriteLine("Введите команду help для просмотра всех команд.");
 
@@ -51,10 +43,11 @@ namespace TodoList
                 switch (userInput)
                 {
                     case "help":
-                        Console.WriteLine(todos[1]);
-                        Console.WriteLine(todos[2]);
-                        Console.WriteLine(todos[3]);
-                        Console.WriteLine(todos[4]);
+                        Console.WriteLine("Доступные команды: ");
+                        Console.WriteLine("profile - выводит данные о пользователе");
+                        Console.WriteLine("add - добавляет новую задачу");
+                        Console.WriteLine("view - выводит все задачи из массива");
+                        Console.WriteLine("exit - завершает цикл и останавливает выполнение программы");
                         break;
 
                     case "profile":
