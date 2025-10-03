@@ -21,7 +21,7 @@ namespace TodoList
 
 
             string[] todos = { "help", "profile", "add", "view", "exit" };
-            bool Running = true;
+            bool isRunning = true;
 
             string taskString = "";
             string[] tasks = new string[2];
@@ -31,10 +31,10 @@ namespace TodoList
             todos[2] = "add - добавляет новую задачу";
             todos[3] = "view - выводит все задачи из массива";
             todos[4] = "exit - завершает цикл и останавливает выполнение программы";
-         
+
             Console.WriteLine("Введите команду help для просмотра всех команд.");
 
-            while (Running)
+            while (isRunning)
             {
 
                 string userInput = Console.ReadLine();
@@ -83,7 +83,7 @@ namespace TodoList
                         }
                         else
                         {
-                            taskString += "|" + Newtask; 
+                            taskString += "|" + Newtask;
                         }
 
                         Console.WriteLine("Задача добавлена!");
@@ -106,18 +106,18 @@ namespace TodoList
                         break;
 
                     case "exit":
-                        Running = false;
+                        isRunning = false;
                         Console.WriteLine("Программа завершена.");
                         break;
 
                     default:
                         Console.WriteLine("Неизвестная команда. Введите команду help для просмотра доступных команд");
                         break;
-                    
+
                 }
-            
+
             }
         }
-    
-    } 
+
+    }
 }
