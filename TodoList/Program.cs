@@ -70,7 +70,6 @@ namespace TodoList
                             }
 
                             tasks = newTasks;
-                            Console.WriteLine($"Массив расширен до {tasks.Length} элементов");
                         }
 
 
