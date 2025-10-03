@@ -38,11 +38,19 @@ namespace TodoList
             {
 
                 string userInput = Console.ReadLine();
+                string argument = "";
+
+
+                if (userInput.Contains(" "))
+                {
+                    string[] parts = userInput.Split(new char[] { ' ' }, 2);
+                    userInput = parts[0];
+                    argument = parts.Length > 1 ? parts[1] : "";
+                }
 
                 switch (userInput)
                 {
                     case "help":
-                        Console.WriteLine("Доступные команды: ");
                         Console.WriteLine(todos[1]);
                         Console.WriteLine(todos[2]);
                         Console.WriteLine(todos[3]);
@@ -57,49 +65,47 @@ namespace TodoList
                         break;
 
                     case "add":
-                        Console.WriteLine("Введи задачу которую хотите добавить:");
-                        string Newtask = Console.ReadLine();
-
-                        if (taskCount >= tasks.Length)
+                        if (string.IsNullOrWhiteSpace(argument))
                         {
-                            string[] newTasks = new string[tasks.Length * 2];
+                            Console.WriteLine("Ошибка: Укажите задачу. Пример: add Новая задача");
+                            break;
+                        }
 
-                            for (int i = 0; i < tasks.Length; i++)
+                        string newTask = argument.Trim();
+
+                        if (string.IsNullOrWhiteSpace(newTask))
+                        {
+                            Console.WriteLine("Ошибка: Задача не может быть пустой");
+                            break;
+                        }
+
+                        if (taskCount >= todos.Length)
+                        {
+                            string[] newTodos = new string[todos.Length * 2];
+                            for (int i = 0; i < todos.Length; i++)
                             {
-                                newTasks[i] = tasks[i];
+                                newTodos[i] = todos[i];
                             }
-
-                            tasks = newTasks;
+                            todos = newTodos;
                         }
 
-
-                        tasks[taskCount] = Newtask;
+                        todos[taskCount] = newTask;
                         taskCount++;
-
-                        if (string.IsNullOrEmpty(taskString))
-                        {
-                            taskString = Newtask;
-                        }
-                        else
-                        {
-                            taskString += "|" + Newtask;
-                        }
 
                         Console.WriteLine("Задача добавлена!");
                         break;
 
                     case "view":
-                        if (string.IsNullOrEmpty(taskString))
+                        if (taskCount == 0)
                         {
                             Console.WriteLine("Список задач пуст.");
                         }
                         else
                         {
                             Console.WriteLine("Все задачи:");
-                            string[] tasksGroup = taskString.Split("|");
-                            for (int i = 0; i < tasksGroup.Length; i++)
+                            for (int i = 0; i < taskCount; i++)
                             {
-                                Console.WriteLine($"{i + 1}. {tasksGroup[i]}");
+                                Console.WriteLine($"{i + 1}. {todos[i]}");
                             }
                         }
                         break;
