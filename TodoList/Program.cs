@@ -6,6 +6,10 @@ namespace TodoList
     {
         private const int InitialTasksCapacity = 2;
         private const string DateFormat = "yyyy";
+        private static string[] tasks = new string[InitialTasksCapacity];
+        private static bool[] taskStatuses = new bool[InitialTasksCapacity];
+        private static DateTime[] taskDates = new DateTime[InitialTasksCapacity];
+        private static int taskCount = 0;
 
         static void Main(string[] args)
         {
@@ -36,9 +40,7 @@ namespace TodoList
 
         static void RunTodoApplication((string Name, string Surname, int Age) user)
         {
-            string[] tasks = new string[InitialTasksCapacity];
             bool isRunning = true;
-            int taskCount = 0;
 
             Console.WriteLine("Введите команду help для просмотра всех команд.");
 
@@ -55,10 +57,10 @@ namespace TodoList
                         ShowUserProfile(user);
                         break;
                     case "add":
-                        AddTask(ref tasks, ref taskCount, argument);
+                        AddTask(argument);
                         break;
                     case "view":
-                        ShowTasks(tasks, taskCount);
+                        ShowTasks();
                         break;
                     case "exit":
                         isRunning = false;
@@ -100,7 +102,7 @@ namespace TodoList
             Console.WriteLine($"Возраст: {user.Age}");
         }
 
-        static void AddTask(ref string[] tasks, ref int taskCount, string taskDescription)
+        static void AddTask(string taskDescription)
         {
             if (string.IsNullOrWhiteSpace(taskDescription))
             {
@@ -118,25 +120,37 @@ namespace TodoList
 
             if (taskCount >= tasks.Length)
             {
-                tasks = ResizeTasksArray(tasks);
+                ResizeAllArrays();
             }
 
             tasks[taskCount] = newTask;
+            taskStatuses[taskCount] = false;
+            taskDates[taskCount] = DateTime.Now;
             taskCount++;
             Console.WriteLine("Задача добавлена!");
         }
 
-        static string[] ResizeTasksArray(string[] tasks)
+        static void ResizeAllArrays()
         {
-            string[] newTasks = new string[tasks.Length * 2];
-            for (int i = 0; i < tasks.Length; i++)
+            int newSize = tasks.Length * 2;
+
+            string[] newTasks = new string[newSize];
+            bool[] newStatuses = new bool[newSize];
+            DateTime[] newDates = new DateTime[newSize];
+
+            for (int i = 0; i < taskCount; i++)
             {
                 newTasks[i] = tasks[i];
+                newStatuses[i] = taskStatuses[i];
+                newDates[i] = taskDates[i];
             }
-            return newTasks;
+
+            tasks = newTasks;
+            taskStatuses = newStatuses;
+            taskDates = newDates;
         }
 
-        static void ShowTasks(string[] tasks, int taskCount)
+        static void ShowTasks()
         {
             if (taskCount == 0)
             {
@@ -147,9 +161,20 @@ namespace TodoList
                 Console.WriteLine("Все задачи:");
                 for (int i = 0; i < taskCount; i++)
                 {
-                    Console.WriteLine($"{i + 1}. {tasks[i]}");
+                    string status = taskStatuses[i] ? "Выполнена" : "Не выполнена";
+                    Console.WriteLine($"{i + 1}. {tasks[i]} - {status} (Создана: {taskDates[i]})");
                 }
             }
+        }
+
+        static string[] ResizeTasksArray(string[] tasks)
+        {
+            string[] newTasks = new string[tasks.Length * 2];
+            for (int i = 0; i < tasks.Length; i++)
+            {
+                newTasks[i] = tasks[i];
+            }
+            return newTasks;
         }
     }
 }
