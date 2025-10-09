@@ -65,6 +65,9 @@ namespace TodoList
                     case "done":
                         MarkTaskAsDone(argument);
                         break;
+                    case "delete":
+                        DeleteTask(argument);
+                        break;
                     case "exit":
                         isRunning = false;
                         Console.WriteLine("Программа завершена.");
@@ -194,6 +197,27 @@ namespace TodoList
             {
                 Console.WriteLine("Ошибка: Неверный индекс задачи. Пример: done 1");
             }
+        }
+
+        static void DeleteTask(string argument)
+        {
+            if (int.TryParse(argument, out int index) && index > 0 && index <= taskCount)
+            {
+                for (int i = index - 1; i < taskCount - 1; i++)
+                {
+                    tasks[i] = tasks[i + 1];
+                    taskStatuses[i] = taskStatuses[i + 1];
+                    taskDates[i] = taskDates[i + 1];
+                }
+
+                taskCount--;
+                Console.WriteLine($"Задача {index} удалена");
+            }
+            else
+            {
+                Console.WriteLine("Ошибка: Неверный индекс задачи. Пример: delete 1");
+            }
+
         }
     }
 }
