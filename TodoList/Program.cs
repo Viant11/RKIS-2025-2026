@@ -68,6 +68,9 @@ namespace TodoList
                     case "delete":
                         DeleteTask(argument);
                         break;
+                    case "update":
+                        UpdateTask(argument);
+                        break;
                     case "exit":
                         isRunning = false;
                         Console.WriteLine("Программа завершена.");
@@ -217,7 +220,46 @@ namespace TodoList
             {
                 Console.WriteLine("Ошибка: Неверный индекс задачи. Пример: delete 1");
             }
+        }
 
+        static void UpdateTask(string argument)
+        {
+            if (string.IsNullOrWhiteSpace(argument))
+            {
+                Console.WriteLine("Ошибка: Укажите индекс и новый текст задачи. Пример: update 1 \"Новый текст\"");
+                return;
+            }
+
+            int firstSpaceIndex = argument.IndexOf(' ');
+            if (firstSpaceIndex == -1)
+            {
+                Console.WriteLine("Ошибка: Неверный формат команды. Пример: update 1 \"Новый текст\"");
+                return;
+            }
+
+            string indexStr = argument.Substring(0, firstSpaceIndex);
+            string newText = argument.Substring(firstSpaceIndex + 1).Trim();
+
+            if (!int.TryParse(indexStr, out int index) || index <= 0 || index > taskCount)
+            {
+                Console.WriteLine("Ошибка: Неверный индекс задачи. Пример: update 1 \"Новый текст\"");
+                return;
+            }
+
+            if (newText.StartsWith("\"") && newText.EndsWith("\""))
+            {
+                newText = newText.Substring(1, newText.Length - 2);
+            }
+
+            if (string.IsNullOrWhiteSpace(newText))
+            {
+                Console.WriteLine("Ошибка: Новый текст задачи не может быть пустым");
+                return;
+            }
+
+            tasks[index - 1] = newText;
+            taskDates[index - 1] = DateTime.Now;
+            Console.WriteLine($"Задача {index} обновлена");
         }
     }
 }
