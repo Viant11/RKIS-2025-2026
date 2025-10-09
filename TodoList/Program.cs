@@ -62,6 +62,9 @@ namespace TodoList
                     case "view":
                         ShowTasks();
                         break;
+                    case "done":
+                        MarkTaskAsDone(argument);
+                        break;
                     case "exit":
                         isRunning = false;
                         Console.WriteLine("Программа завершена.");
@@ -91,6 +94,9 @@ namespace TodoList
             Console.WriteLine("profile - выводит данные о пользователе");
             Console.WriteLine("add - добавляет новую задачу");
             Console.WriteLine("view - выводит все задачи из массива");
+            Console.WriteLine("done <idx> - отмечает задачу выполненной");
+            Console.WriteLine("delete <idx> - удаляет задачу по индексу");
+            Console.WriteLine("update <idx> \"new_text\" - обновляет текст задачи");
             Console.WriteLine("exit - завершает цикл и останавливает выполнение программы");
         }
 
@@ -175,6 +181,19 @@ namespace TodoList
                 newTasks[i] = tasks[i];
             }
             return newTasks;
+        }
+        static void MarkTaskAsDone(string argument)
+        {
+            if (int.TryParse(argument, out int index) && index > 0 && index <= taskCount)
+            {
+                taskStatuses[index - 1] = true;
+                taskDates[index - 1] = DateTime.Now;
+                Console.WriteLine($"Задача {index} отмечена как выполненная");
+            }
+            else
+            {
+                Console.WriteLine("Ошибка: Неверный индекс задачи. Пример: done 1");
+            }
         }
     }
 }
