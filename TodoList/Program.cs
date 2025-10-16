@@ -41,7 +41,13 @@ namespace TodoList
             string surname = Console.ReadLine();
 
             Console.WriteLine("Введите Год Рождения");
-            int birthYear = int.Parse(Console.ReadLine());
+            string input = Console.ReadLine();
+
+            if (!int.TryParse(input, out int birthYear))
+            {
+                Console.WriteLine("Ошибка: Неверный формат года рождения");
+                return ("", "", 0);
+            }
 
             int currentYear = int.Parse(DateTime.Now.ToString(DateFormat));
             int age = currentYear - birthYear;
@@ -403,6 +409,12 @@ namespace TodoList
 
         static void MarkTaskAsDone(string argument)
         {
+            if (string.IsNullOrWhiteSpace(argument))
+            {
+                Console.WriteLine("Ошибка: Укажите индекс задачи. Пример: done 1");
+                return;
+            }
+
             if (int.TryParse(argument, out int index) && index > 0 && index <= taskCount)
             {
                 taskStatuses[index - 1] = true;
@@ -417,6 +429,12 @@ namespace TodoList
 
         static void DeleteTask(string argument)
         {
+            if (string.IsNullOrWhiteSpace(argument))
+            {
+                Console.WriteLine("Ошибка: Укажите индекс задачи. Пример: delete 1");
+                return;
+            }
+
             if (int.TryParse(argument, out int index) && index > 0 && index <= taskCount)
             {
                 for (int i = index - 1; i < taskCount - 1; i++)
@@ -427,7 +445,7 @@ namespace TodoList
                 }
 
                 taskCount--;
-                Console.WriteLine($"Задача {index} удалена");
+            Console.WriteLine($"Задача {index} удалена");
             }
             else
             {
