@@ -6,7 +6,11 @@ struct CommandData
     public string Argument;
     public bool MultilineFlag;
     public bool IncompleteFlag; 
-    public bool StatisticsFlag; 
+    public bool StatisticsFlag;
+    public bool ShowIndexFlag;
+    public bool ShowStatusFlag; 
+    public bool ShowDateFlag;
+    public bool ShowAllFlag;
 }
 
 namespace TodoList
@@ -112,17 +116,32 @@ namespace TodoList
                 if (parts[i].StartsWith("--"))
                 {
                     string flagName = parts[i].Substring(2);
-                    if (flagName == "multiline")
-                        result.MultilineFlag = true;
+                    switch (flagName)
+                    {
+                        case "multiline": result.MultilineFlag = true; break;
+                        case "index": result.ShowIndexFlag = true; break;
+                        case "status": result.ShowStatusFlag = true; break;
+                        case "update-date": result.ShowDateFlag = true; break;
+                        case "all": result.ShowAllFlag = true; break;
+                        case "incomplete": result.IncompleteFlag = true; break;
+                        case "statistics": result.StatisticsFlag = true; break;
+                    }
                 }
                 else if (parts[i].StartsWith("-") && parts[i].Length > 1)
                 {
                     string shortFlags = parts[i].Substring(1);
                     foreach (char flagChar in shortFlags)
                     {
-                        if (flagChar == 'm') result.MultilineFlag = true;
-                        if (flagChar == 'i') result.IncompleteFlag = true;
-                        if (flagChar == 's') result.StatisticsFlag = true;
+                        switch (flagChar)
+                        {
+                            case 'm': result.MultilineFlag = true; break;
+                            case 'i': result.ShowIndexFlag = true; break;
+                            case 's': result.ShowStatusFlag = true; break;
+                            case 'd': result.ShowDateFlag = true; break;
+                            case 'a': result.ShowAllFlag = true; break;
+                            case 'I': result.IncompleteFlag = true; break;
+                            case 'S': result.StatisticsFlag = true; break;
+                        }
                     }
                 }
                 else
@@ -132,6 +151,13 @@ namespace TodoList
                     else
                         argument += " " + parts[i];
                 }
+            }
+
+            if (result.ShowAllFlag)
+            {
+                result.ShowIndexFlag = true;
+                result.ShowStatusFlag = true;
+                result.ShowDateFlag = true;
             }
 
             result.Argument = argument;
@@ -152,6 +178,14 @@ namespace TodoList
             Console.WriteLine("  --multiline или -m - многострочный ввод для add");
             Console.WriteLine("  -i - показывать только невыполненные задачи для view");
             Console.WriteLine("  -s - показывать статистику для view");
+            Console.WriteLine("Флаги для view:");
+            Console.WriteLine("  --index или -i - показывать индекс задачи");
+            Console.WriteLine("  --status или -s - показывать статус задачи");
+            Console.WriteLine("  --update-date или -d - показывать дату изменения");
+            Console.WriteLine("  --all или -a - показывать все данные");
+            Console.WriteLine("  --incomplete или -I - показывать только невыполненные");
+            Console.WriteLine("  --statistics или -S - показывать статистику");
+            Console.WriteLine("Примеры: view -isd, view --all, view -i --status");
         }
 
         static void ShowUserProfile((string Name, string Surname, int Age) user)
@@ -251,20 +285,34 @@ namespace TodoList
                 return;
             }
 
+            bool showIndex = commandData.ShowIndexFlag;
+            bool showStatus = commandData.ShowStatusFlag;
+            bool showDate = commandData.ShowDateFlag;
+            bool showOnlyText = !showIndex && !showStatus && !showDate;
             int displayedCount = 0;
             int completedCount = 0;
 
-            Console.WriteLine(showIncompleteOnly ? "Невыполненные задачи:" : "Все задачи:");
+            if (!showOnlyText)
+            {
+                PrintTableHeader(showIndex, showStatus, showDate);
+            }
 
             for (int i = 0; i < taskCount; i++)
             {
                 if (showIncompleteOnly && taskStatuses[i])
                     continue;
 
-                string status = taskStatuses[i] ? "Выполнена" : "Не выполнена";
-                Console.WriteLine($"{i + 1}. {tasks[i]} - {status} (Создана: {taskDates[i]})");
-                displayedCount++;
+                if (showOnlyText)
+                {
+                    string shortText = tasks[i].Length > 30 ? tasks[i].Substring(0, 27) + "..." : tasks[i];
+                    Console.WriteLine(shortText);
+                }
+                else
+                {
+                    PrintTaskRow(i, showIndex, showStatus, showDate);
+                }
 
+                displayedCount++;
                 if (taskStatuses[i])
                     completedCount++;
             }
