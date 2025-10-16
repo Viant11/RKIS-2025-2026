@@ -105,7 +105,7 @@ namespace TodoList
             if (string.IsNullOrEmpty(userInput))
                 return result;
 
-            string[] parts = userInput.Split(' ');
+            string[] parts = userInput.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
             if (parts.Length == 0)
                 return result;
@@ -443,13 +443,13 @@ namespace TodoList
                 return;
             }
 
-            int firstSpaceIndex = argument.IndexOf(' ');
-            if (firstSpaceIndex == -1)
+            if (!argument.Contains(" "))
             {
                 Console.WriteLine("Ошибка: Неверный формат команды. Пример: update 1 \"Новый текст\"");
                 return;
             }
 
+            int firstSpaceIndex = argument.IndexOf(' ');
             string indexStr = argument.Substring(0, firstSpaceIndex);
             string newText = argument.Substring(firstSpaceIndex + 1).Trim();
 
