@@ -84,6 +84,9 @@ namespace TodoList
                     case "update":
                         UpdateTask(commandData.Argument);
                         break;
+                    case "read":
+                        ReadTask(commandData.Argument);
+                        break;
                     case "exit":
                         isRunning = false;
                         Console.WriteLine("Программа завершена.");
@@ -373,6 +376,28 @@ namespace TodoList
                 row += taskDates[index].ToString("dd.MM.yyyy HH:mm");
 
             Console.WriteLine(row);
+        }
+
+        static void ReadTask(string argument)
+        {
+            if (string.IsNullOrWhiteSpace(argument))
+            {
+                Console.WriteLine("Ошибка: Укажите индекс задачи. Пример: read 1");
+                return;
+            }
+
+            if (!int.TryParse(argument, out int index) || index <= 0 || index > taskCount)
+            {
+                Console.WriteLine("Ошибка: Неверный индекс задачи. Пример: read 1");
+                return;
+            }
+
+            Console.WriteLine("=== Полная информация о задаче ===");
+            Console.WriteLine($"Индекс: #{index}");
+            Console.WriteLine($"Текст: {tasks[index - 1]}");
+            Console.WriteLine($"Статус: {(taskStatuses[index - 1] ? "Выполнена" : "Не выполнена")}");
+            Console.WriteLine($"Дата последнего изменения: {taskDates[index - 1]:dd.MM.yyyy HH:mm}");
+            Console.WriteLine(new string('=', 40));
         }
 
         static void MarkTaskAsDone(string argument)
