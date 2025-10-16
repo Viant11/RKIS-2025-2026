@@ -205,10 +205,8 @@ namespace TodoList
             Console.WriteLine("delete <idx> - удаляет задачу по индексу");
             Console.WriteLine("update <idx> \"new_text\" - обновляет текст задачи");
             Console.WriteLine("exit - завершает цикл и останавливает выполнение программы");
-            Console.WriteLine("Флаги:");
+            Console.WriteLine("Флаги для add:");
             Console.WriteLine("  --multiline или -m - многострочный ввод для add");
-            Console.WriteLine("  -i - показывать только невыполненные задачи для view");
-            Console.WriteLine("  -s - показывать статистику для view");
             Console.WriteLine("Флаги для view:");
             Console.WriteLine("  --index или -i - показывать индекс задачи");
             Console.WriteLine("  --status или -s - показывать статус задачи");
