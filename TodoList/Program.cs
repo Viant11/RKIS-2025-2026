@@ -173,6 +173,7 @@ namespace TodoList
             Console.WriteLine("profile - выводит данные о пользователе");
             Console.WriteLine("add - добавляет новую задачу");
             Console.WriteLine("view - выводит все задачи из массива");
+            Console.WriteLine("read <idx> - показывает полную информацию о задаче");
             Console.WriteLine("done <idx> - отмечает задачу выполненной");
             Console.WriteLine("delete <idx> - удаляет задачу по индексу");
             Console.WriteLine("update <idx> \"new_text\" - обновляет текст задачи");
