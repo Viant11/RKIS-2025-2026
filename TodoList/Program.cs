@@ -37,11 +37,29 @@ namespace TodoList
             Console.WriteLine("Введите Имя");
             string name = Console.ReadLine();
 
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                Console.WriteLine("Ошибка: Имя не может быть пустым");
+                return ("", "", 0);
+            }
+
             Console.WriteLine("Введите Фамилию");
             string surname = Console.ReadLine();
 
+            if (string.IsNullOrWhiteSpace(surname))
+            {
+                Console.WriteLine("Ошибка: Фамилия не может быть пустой");
+                return ("", "", 0);
+            }
+
             Console.WriteLine("Введите Год Рождения");
             string input = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                Console.WriteLine("Ошибка: Год рождения не может быть пустым");
+                return ("", "", 0);
+            }
 
             if (!int.TryParse(input, out int birthYear))
             {
@@ -122,6 +140,9 @@ namespace TodoList
 
             for (int i = 1; i < parts.Length; i++)
             {
+                if (parts[i] == null)
+                    continue;
+
                 if (parts[i].StartsWith("--"))
                 {
                     string flagName = parts[i].Substring(2);
@@ -234,6 +255,12 @@ namespace TodoList
                 return;
             }
 
+            if (tasks == null || taskStatuses == null || taskDates == null)
+            {
+                Console.WriteLine("Ошибка: Массивы задач не инициализированы");
+                return;
+            }
+
             if (taskCount >= tasks.Length)
             {
                 ResizeAllArrays();
@@ -274,9 +301,12 @@ namespace TodoList
 
             for (int i = 0; i < taskCount; i++)
             {
-                newTasks[i] = tasks[i];
-                newStatuses[i] = taskStatuses[i];
-                newDates[i] = taskDates[i];
+                if (i < tasks.Length && tasks[i] != null)
+                {
+                    newTasks[i] = tasks[i];
+                    newStatuses[i] = taskStatuses[i];
+                    newDates[i] = taskDates[i];
+                }
             }
 
             tasks = newTasks;
