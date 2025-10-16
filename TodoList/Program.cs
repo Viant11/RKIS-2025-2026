@@ -1,5 +1,14 @@
 ﻿using System;
 
+struct CommandData
+{
+    public string Command;
+    public string Argument;
+    public bool MultilineFlag;
+    public bool IncompleteFlag; 
+    public bool StatisticsFlag; 
+}
+
 namespace TodoList
 {
     internal class Program
@@ -46,9 +55,9 @@ namespace TodoList
 
             while (isRunning)
             {
-                var (command, argument) = ParseUserInput(Console.ReadLine());
+                CommandData commandData = ParseUserInput(Console.ReadLine());
 
-                switch (command)
+                switch (commandData.Command)
                 {
                     case "help":
                         ShowHelp();
@@ -57,19 +66,19 @@ namespace TodoList
                         ShowUserProfile(user);
                         break;
                     case "add":
-                        AddTask(argument);
+                        AddTask(commandData);
                         break;
                     case "view":
-                        ShowTasks();
+                        ShowTasks(commandData);
                         break;
                     case "done":
-                        MarkTaskAsDone(argument);
+                        MarkTaskAsDone(commandData.Argument);
                         break;
                     case "delete":
-                        DeleteTask(argument);
+                        DeleteTask(commandData.Argument);
                         break;
                     case "update":
-                        UpdateTask(argument);
+                        UpdateTask(commandData.Argument);
                         break;
                     case "exit":
                         isRunning = false;
@@ -82,16 +91,51 @@ namespace TodoList
             }
         }
 
-        static (string Command, string Argument) ParseUserInput(string userInput)
+        static CommandData ParseUserInput(string userInput)
         {
+            var result = new CommandData();
+
             if (string.IsNullOrEmpty(userInput))
-                return ("", "");
+                return result;
 
-            if (!userInput.Contains(" "))
-                return (userInput, "");
+            string[] parts = userInput.Split(' ');
 
-            string[] parts = userInput.Split(new char[] { ' ' }, 2);
-            return (parts[0], parts.Length > 1 ? parts[1] : "");
+            if (parts.Length == 0)
+                return result;
+
+            result.Command = parts[0];
+
+            string argument = "";
+
+            for (int i = 1; i < parts.Length; i++)
+            {
+                if (parts[i].StartsWith("--"))
+                {
+                    string flagName = parts[i].Substring(2);
+                    if (flagName == "multiline")
+                        result.MultilineFlag = true;
+                }
+                else if (parts[i].StartsWith("-") && parts[i].Length > 1)
+                {
+                    string shortFlags = parts[i].Substring(1);
+                    foreach (char flagChar in shortFlags)
+                    {
+                        if (flagChar == 'm') result.MultilineFlag = true;
+                        if (flagChar == 'i') result.IncompleteFlag = true;
+                        if (flagChar == 's') result.StatisticsFlag = true;
+                    }
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty(argument))
+                        argument = parts[i];
+                    else
+                        argument += " " + parts[i];
+                }
+            }
+
+            result.Argument = argument;
+            return result;
         }
 
         static void ShowHelp()
@@ -104,6 +148,10 @@ namespace TodoList
             Console.WriteLine("delete <idx> - удаляет задачу по индексу");
             Console.WriteLine("update <idx> \"new_text\" - обновляет текст задачи");
             Console.WriteLine("exit - завершает цикл и останавливает выполнение программы");
+            Console.WriteLine("Флаги:");
+            Console.WriteLine("  --multiline или -m - многострочный ввод для add");
+            Console.WriteLine("  -i - показывать только невыполненные задачи для view");
+            Console.WriteLine("  -s - показывать статистику для view");
         }
 
         static void ShowUserProfile((string Name, string Surname, int Age) user)
@@ -114,8 +162,20 @@ namespace TodoList
             Console.WriteLine($"Возраст: {user.Age}");
         }
 
-        static void AddTask(string taskDescription)
+        static void AddTask(CommandData commandData)
         {
+            string taskDescription;
+
+            if (commandData.MultilineFlag)
+            {
+                Console.WriteLine("Многострочный режим. Вводите текст задачи построчно. Для завершения введите !end");
+                taskDescription = ReadMultilineInput();
+            }
+            else
+            {
+                taskDescription = commandData.Argument;
+            }
+
             if (string.IsNullOrWhiteSpace(taskDescription))
             {
                 Console.WriteLine("Ошибка: Укажите задачу. Пример: add Новая задача");
@@ -142,6 +202,24 @@ namespace TodoList
             Console.WriteLine("Задача добавлена!");
         }
 
+        static string ReadMultilineInput()
+        {
+            string result = "";
+            string line;
+
+            while ((line = Console.ReadLine()) != "!end")
+            {
+                if (!string.IsNullOrWhiteSpace(line))
+                {
+                    if (!string.IsNullOrEmpty(result))
+                        result += Environment.NewLine;
+                    result += line;
+                }
+            }
+
+            return result;
+        }
+
         static void ResizeAllArrays()
         {
             int newSize = tasks.Length * 2;
@@ -162,32 +240,51 @@ namespace TodoList
             taskDates = newDates;
         }
 
-        static void ShowTasks()
+        static void ShowTasks(CommandData commandData)
         {
+            bool showIncompleteOnly = commandData.IncompleteFlag;
+            bool showStatistics = commandData.StatisticsFlag;
+
             if (taskCount == 0)
             {
                 Console.WriteLine("Список задач пуст.");
+                return;
             }
-            else
+
+            int displayedCount = 0;
+            int completedCount = 0;
+
+            Console.WriteLine(showIncompleteOnly ? "Невыполненные задачи:" : "Все задачи:");
+
+            for (int i = 0; i < taskCount; i++)
             {
-                Console.WriteLine("Все задачи:");
-                for (int i = 0; i < taskCount; i++)
+                if (showIncompleteOnly && taskStatuses[i])
+                    continue;
+
+                string status = taskStatuses[i] ? "Выполнена" : "Не выполнена";
+                Console.WriteLine($"{i + 1}. {tasks[i]} - {status} (Создана: {taskDates[i]})");
+                displayedCount++;
+
+                if (taskStatuses[i])
+                    completedCount++;
+            }
+
+            if (showStatistics)
+            {
+                Console.WriteLine("\n=== Статистика ===");
+                Console.WriteLine($"Всего задач: {taskCount}");
+                Console.WriteLine($"Выполнено: {completedCount}");
+                Console.WriteLine($"Не выполнено: {taskCount - completedCount}");
+                Console.WriteLine($"Показано: {displayedCount}");
+
+                if (taskCount > 0)
                 {
-                    string status = taskStatuses[i] ? "Выполнена" : "Не выполнена";
-                    Console.WriteLine($"{i + 1}. {tasks[i]} - {status} (Создана: {taskDates[i]})");
+                    double completionRate = (double)completedCount / taskCount * 100;
+                    Console.WriteLine($"Процент выполнения: {completionRate:F1}%");
                 }
             }
         }
 
-        static string[] ResizeTasksArray(string[] tasks)
-        {
-            string[] newTasks = new string[tasks.Length * 2];
-            for (int i = 0; i < tasks.Length; i++)
-            {
-                newTasks[i] = tasks[i];
-            }
-            return newTasks;
-        }
         static void MarkTaskAsDone(string argument)
         {
             if (int.TryParse(argument, out int index) && index > 0 && index <= taskCount)
