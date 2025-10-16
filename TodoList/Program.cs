@@ -333,6 +333,48 @@ namespace TodoList
             }
         }
 
+        static void PrintTableHeader(bool showIndex, bool showStatus, bool showDate)
+        {
+            string header = "";
+
+            if (showIndex)
+                header += "Индекс".PadRight(8) + " | ";
+
+            header += "Текст задачи".PadRight(33) + " | ";
+
+            if (showStatus)
+                header += "Статус".PadRight(12) + " | ";
+
+            if (showDate)
+                header += "Дата изменения";
+
+            Console.WriteLine(header);
+            Console.WriteLine(new string('-', header.Length));
+        }
+
+        static void PrintTaskRow(int index, bool showIndex, bool showStatus, bool showDate)
+        {
+            string row = "";
+
+            if (showIndex)
+                row += $"#{index + 1}".PadRight(8) + " | ";
+
+            string taskText = tasks[index];
+            string shortText = taskText.Length > 30 ? taskText.Substring(0, 27) + "..." : taskText.PadRight(30);
+            row += shortText.PadRight(33) + " | ";
+
+            if (showStatus)
+            {
+                string status = taskStatuses[index] ? "Выполнена" : "Не выполнена";
+                row += status.PadRight(12) + " | ";
+            }
+
+            if (showDate)
+                row += taskDates[index].ToString("dd.MM.yyyy HH:mm");
+
+            Console.WriteLine(row);
+        }
+
         static void MarkTaskAsDone(string argument)
         {
             if (int.TryParse(argument, out int index) && index > 0 && index <= taskCount)
