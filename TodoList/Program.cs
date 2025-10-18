@@ -285,7 +285,7 @@ exit - завершает цикл и останавливает выполне�
             string result = "";
             string line;
 
-            Console.Write("> ");
+            Console.Write("> "); 
 
             while ((line = Console.ReadLine()) != "!end")
             {
