@@ -196,25 +196,31 @@ namespace TodoList
 
         static void ShowHelp()
         {
-            Console.WriteLine("Доступные команды: ");
-            Console.WriteLine("profile - выводит данные о пользователе");
-            Console.WriteLine("add - добавляет новую задачу");
-            Console.WriteLine("view - выводит все задачи из массива");
-            Console.WriteLine("read <idx> - показывает полную информацию о задаче");
-            Console.WriteLine("done <idx> - отмечает задачу выполненной");
-            Console.WriteLine("delete <idx> - удаляет задачу по индексу");
-            Console.WriteLine("update <idx> \"new_text\" - обновляет текст задачи");
-            Console.WriteLine("exit - завершает цикл и останавливает выполнение программы");
-            Console.WriteLine("Флаги для add:");
-            Console.WriteLine("  --multiline или -m - многострочный ввод для add");
-            Console.WriteLine("Флаги для view:");
-            Console.WriteLine("  --index или -i - показывать индекс задачи");
-            Console.WriteLine("  --status или -s - показывать статус задачи");
-            Console.WriteLine("  --update-date или -d - показывать дату изменения");
-            Console.WriteLine("  --all или -a - показывать все данные");
-            Console.WriteLine("  --incomplete или -I - показывать только невыполненные");
-            Console.WriteLine("  --statistics или -S - показывать статистику");
-            Console.WriteLine("Примеры: view -isd, view --all, view -i --status");
+            string helpText = @"
+Доступные команды:
+profile - выводит данные о пользователе
+add - добавляет новую задачу
+view - выводит все задачи из массива
+read <idx> - показывает полную информацию о задаче
+done <idx> - отмечает задачу выполненной
+delete <idx> - удаляет задачу по индексу
+update <idx> ""new_text"" - обновляет текст задачи
+exit - завершает цикл и останавливает выполнение программы
+
+Флаги для add:
+--multiline или -m - многострочный ввод для add
+
+Флаги для view:
+--index или -i - показывать индекс задачи
+--status или -s - показывать статус задачи
+--update-date или -d - показывать дату изменения
+--all или -a - показывать все данные
+--incomplete или -I - показывать только невыполненные
+--statistics или -S - показывать статистику
+
+Примеры: view -isd, view --all, view -i --status";
+
+            Console.WriteLine(helpText);
         }
 
         static void ShowUserProfile((string Name, string Surname, int Age) user)
