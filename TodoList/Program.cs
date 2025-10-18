@@ -225,10 +225,13 @@ exit - завершает цикл и останавливает выполне�
 
         static void ShowUserProfile((string Name, string Surname, int Age) user)
         {
-            Console.WriteLine("Данные пользователя:");
-            Console.WriteLine($"Имя: {user.Name}");
-            Console.WriteLine($"Фамилия: {user.Surname}");
-            Console.WriteLine($"Возраст: {user.Age}");
+            string profile = @$"
+Данные пользователя:
+Имя: {user.Name}
+Фамилия: {user.Surname}
+Возраст: {user.Age}";
+
+            Console.WriteLine(profile);
         }
 
         static void AddTask(CommandData commandData)
@@ -281,6 +284,8 @@ exit - завершает цикл и останавливает выполне�
         {
             string result = "";
             string line;
+
+            Console.Write("> ");
 
             while ((line = Console.ReadLine()) != "!end")
             {
