@@ -292,9 +292,10 @@ exit - завершает цикл и останавливает выполне�
                 if (!string.IsNullOrWhiteSpace(line))
                 {
                     if (!string.IsNullOrEmpty(result))
-                        result += Environment.NewLine;
+                        result += "\n";
                     result += line;
                 }
+                Console.Write("> ");
             }
 
             return result;
