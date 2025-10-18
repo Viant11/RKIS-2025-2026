@@ -354,7 +354,8 @@ exit - завершает цикл и останавливает выполне�
 
                 if (showOnlyText)
                 {
-                    string shortText = tasks[i].Length > 30 ? tasks[i].Substring(0, 27) + "..." : tasks[i];
+                    string shortText = tasks[i].Replace("\n", " ").Replace("\r", " ");
+                    shortText = shortText.Length > 30 ? shortText.Substring(0, 27) + "..." : shortText;
                     Console.WriteLine(shortText);
                 }
                 else
@@ -409,7 +410,7 @@ exit - завершает цикл и останавливает выполне�
             if (showIndex)
                 row += $"#{index + 1}".PadRight(8) + " | ";
 
-            string taskText = tasks[index];
+            string taskText = tasks[index].Replace("\n", " ").Replace("\r", " ");
             string shortText = taskText.Length > 30 ? taskText.Substring(0, 27) + "..." : taskText.PadRight(30);
             row += shortText.PadRight(33) + " | ";
 
