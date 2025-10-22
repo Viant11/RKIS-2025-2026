@@ -1,5 +1,44 @@
 ﻿using System;
 
+class ToolItem
+{
+    public string Text { get; private set; }
+    public bool IsDone { get; private set; }
+    public DateTime LastUpdate { get; private set; }
+
+    public ToolItem(string text)
+    {
+        Text = text;
+        IsDone = false;
+        LastUpdate = DateTime.Now;
+    }
+
+    public void MarkDone()
+    {
+        IsDone = true;
+        LastUpdate = DateTime.Now;
+    }
+
+    public void UpdateText(string newText)
+    {
+        Text = newText;
+        LastUpdate = DateTime.Now;
+    }
+
+    public string GetShortInfo()
+    {
+        string cleanText = Text.Replace("\n", " ").Replace("\r", " ");
+        string shortText = cleanText.Length > 30 ? cleanText.Substring(0, 27) + "..." : cleanText;
+        string status = IsDone ? "Выполнена" : "Не выполнена";
+        return $"{shortText.PadRight(33)} | {status.PadRight(12)} | {LastUpdate:dd.MM.yyyy HH:mm}";
+    }
+
+    public string GetFullInfo()
+    {
+        return $"Текст: {Text}\nСтатус: {(IsDone ? "Выполнена" : "Не выполнена")}\nДата последнего изменения: {LastUpdate:dd.MM.yyyy HH:mm}";
+    }
+}
+
 struct CommandData
 {
     public string Command;
@@ -19,9 +58,7 @@ namespace TodoList
     {
         private const int InitialTasksCapacity = 2;
         private const string DateFormat = "yyyy";
-        private static string[] tasks = new string[InitialTasksCapacity];
-        private static bool[] taskStatuses = new bool[InitialTasksCapacity];
-        private static DateTime[] taskDates = new DateTime[InitialTasksCapacity];
+        private static ToolItem[] tasks = new ToolItem[InitialTasksCapacity];
         private static int taskCount = 0;
 
         static void Main(string[] args)
@@ -262,7 +299,7 @@ exit - завершает цикл и останавливает выполне�
                 return;
             }
 
-            if (tasks == null || taskStatuses == null || taskDates == null)
+            if (tasks == null)
             {
                 Console.WriteLine("Ошибка: Массивы задач не инициализированы");
                 return;
@@ -273,9 +310,7 @@ exit - завершает цикл и останавливает выполне�
                 ResizeAllArrays();
             }
 
-            tasks[taskCount] = newTask;
-            taskStatuses[taskCount] = false;
-            taskDates[taskCount] = DateTime.Now;
+            tasks[taskCount] = new ToolItem(newTask);
             taskCount++;
             Console.WriteLine("Задача добавлена!");
         }
@@ -285,7 +320,7 @@ exit - завершает цикл и останавливает выполне�
             string result = "";
             string line;
 
-            Console.Write("> "); 
+            Console.Write("> ");
 
             while ((line = Console.ReadLine()) != "!end")
             {
@@ -304,24 +339,18 @@ exit - завершает цикл и останавливает выполне�
         static void ResizeAllArrays()
         {
             int newSize = tasks.Length * 2;
-
-            string[] newTasks = new string[newSize];
-            bool[] newStatuses = new bool[newSize];
-            DateTime[] newDates = new DateTime[newSize];
+            ToolItem[] newTasks = new ToolItem[newSize];
 
             for (int i = 0; i < taskCount; i++)
             {
                 if (i < tasks.Length && tasks[i] != null)
                 {
                     newTasks[i] = tasks[i];
-                    newStatuses[i] = taskStatuses[i];
-                    newDates[i] = taskDates[i];
                 }
+            
             }
-
+        
             tasks = newTasks;
-            taskStatuses = newStatuses;
-            taskDates = newDates;
         }
 
         static void ShowTasks(CommandData commandData)
@@ -349,12 +378,12 @@ exit - завершает цикл и останавливает выполне�
 
             for (int i = 0; i < taskCount; i++)
             {
-                if (showIncompleteOnly && taskStatuses[i])
+                if (showIncompleteOnly && tasks[i].IsDone)
                     continue;
 
                 if (showOnlyText)
                 {
-                    string shortText = tasks[i].Replace("\n", " ").Replace("\r", " ");
+                    string shortText = tasks[i].Text.Replace("\n", " ").Replace("\r", " ");
                     shortText = shortText.Length > 30 ? shortText.Substring(0, 27) + "..." : shortText;
                     Console.WriteLine(shortText);
                 }
@@ -364,7 +393,7 @@ exit - завершает цикл и останавливает выполне�
                 }
 
                 displayedCount++;
-                if (taskStatuses[i])
+                if (tasks[i].IsDone)
                     completedCount++;
             }
 
@@ -410,18 +439,18 @@ exit - завершает цикл и останавливает выполне�
             if (showIndex)
                 row += $"#{index + 1}".PadRight(8) + " | ";
 
-            string taskText = tasks[index].Replace("\n", " ").Replace("\r", " ");
-            string shortText = taskText.Length > 30 ? taskText.Substring(0, 27) + "..." : taskText.PadRight(30);
+            string cleanText = tasks[index].Text.Replace("\n", " ").Replace("\r", " ");
+            string shortText = cleanText.Length > 30 ? cleanText.Substring(0, 27) + "..." : cleanText;
             row += shortText.PadRight(33) + " | ";
 
             if (showStatus)
             {
-                string status = taskStatuses[index] ? "Выполнена" : "Не выполнена";
+                string status = tasks[index].IsDone ? "Выполнена" : "Не выполнена";
                 row += status.PadRight(12) + " | ";
             }
 
             if (showDate)
-                row += taskDates[index].ToString("dd.MM.yyyy HH:mm");
+                row += tasks[index].LastUpdate.ToString("dd.MM.yyyy HH:mm");
 
             Console.WriteLine(row);
         }
@@ -442,9 +471,7 @@ exit - завершает цикл и останавливает выполне�
 
             Console.WriteLine("=== Полная информация о задаче ===");
             Console.WriteLine($"Индекс: #{index}");
-            Console.WriteLine($"Текст: {tasks[index - 1]}");
-            Console.WriteLine($"Статус: {(taskStatuses[index - 1] ? "Выполнена" : "Не выполнена")}");
-            Console.WriteLine($"Дата последнего изменения: {taskDates[index - 1]:dd.MM.yyyy HH:mm}");
+            Console.WriteLine(tasks[index - 1].GetFullInfo());
             Console.WriteLine(new string('=', 40));
         }
 
@@ -458,8 +485,7 @@ exit - завершает цикл и останавливает выполне�
 
             if (int.TryParse(argument, out int index) && index > 0 && index <= taskCount)
             {
-                taskStatuses[index - 1] = true;
-                taskDates[index - 1] = DateTime.Now;
+                tasks[index - 1].MarkDone();
                 Console.WriteLine($"Задача {index} отмечена как выполненная");
             }
             else
@@ -481,8 +507,6 @@ exit - завершает цикл и останавливает выполне�
                 for (int i = index - 1; i < taskCount - 1; i++)
                 {
                     tasks[i] = tasks[i + 1];
-                    taskStatuses[i] = taskStatuses[i + 1];
-                    taskDates[i] = taskDates[i + 1];
                 }
 
                 taskCount--;
@@ -529,8 +553,7 @@ exit - завершает цикл и останавливает выполне�
                 return;
             }
 
-            tasks[index - 1] = newText;
-            taskDates[index - 1] = DateTime.Now;
+            tasks[index - 1].UpdateText(newText);
             Console.WriteLine($"Задача {index} обновлена");
         }
     }
