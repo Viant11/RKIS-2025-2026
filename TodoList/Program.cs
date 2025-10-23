@@ -1,5 +1,6 @@
 ﻿using System;
 
+
 class ToolItem
 {
     public string Text { get; private set; }
@@ -39,6 +40,27 @@ class ToolItem
     }
 }
 
+class Profile
+{
+    public string FirstName { get; private set; }
+    public string LastName { get; private set; }
+    public int BirthYear { get; private set; }
+
+    public Profile(string firstName, string lastName, int birthYear)
+    {
+        FirstName = firstName;
+        LastName = lastName;
+        BirthYear = birthYear;
+    }
+
+    public string GetInfo()
+    {
+        int currentYear = DateTime.Now.Year;
+        int age = currentYear - BirthYear;
+        return $"{FirstName} {LastName}, возраст {age}";
+    }
+}
+
 class TodoList
 {
     private ToolItem[] tasks;
@@ -72,7 +94,7 @@ class TodoList
         taskCount--;
     }
 
-    public void View(bool showIndex, bool showDone, bool showDate)
+    public void View(bool showIndex, bool showDone, bool showDate, bool showStatus = true)
     {
         if (taskCount == 0)
         {
@@ -80,9 +102,9 @@ class TodoList
             return;
         }
 
-        if (showIndex || showDate)
+        if (showIndex || showDate || showStatus)
         {
-            PrintTableHeader(showIndex, showDate);
+            PrintTableHeader(showIndex, showStatus, showDate);
         }
 
         for (int i = 0; i < taskCount; i++)
@@ -90,9 +112,9 @@ class TodoList
             if (!showDone && tasks[i].IsDone)
                 continue;
 
-            if (showIndex || showDate)
+            if (showIndex || showDate || showStatus)
             {
-                PrintTaskRow(i, showIndex, showDate);
+                PrintTaskRow(i, showIndex, showStatus, showDate);
             }
             else
             {
@@ -127,7 +149,7 @@ class TodoList
         tasks = newTasks;
     }
 
-    private void PrintTableHeader(bool showIndex, bool showDate)
+    private void PrintTableHeader(bool showIndex, bool showStatus, bool showDate)
     {
         string header = "";
 
@@ -136,16 +158,17 @@ class TodoList
 
         header += "Текст задачи".PadRight(33) + " | ";
 
-        header += "Статус".PadRight(12);
+        if (showStatus)
+            header += "Статус".PadRight(12);
 
         if (showDate)
-            header += " | Дата изменения";
+            header += (showStatus ? " | " : "") + "Дата изменения";
 
         Console.WriteLine(header);
         Console.WriteLine(new string('-', header.Length));
     }
 
-    private void PrintTaskRow(int index, bool showIndex, bool showDate)
+    private void PrintTaskRow(int index, bool showIndex, bool showStatus, bool showDate)
     {
         string row = "";
 
@@ -157,10 +180,12 @@ class TodoList
         string status = tasks[index].IsDone ? "Выполнена" : "Не выполнена";
 
         row += shortText.PadRight(33) + " | ";
-        row += status.PadRight(12);
+
+        if (showStatus)
+            row += status.PadRight(12);
 
         if (showDate)
-            row += " | " + tasks[index].LastUpdate.ToString("dd.MM.yyyy HH:mm");
+            row += (showStatus ? " | " : "") + tasks[index].LastUpdate.ToString("dd.MM.yyyy HH:mm");
 
         Console.WriteLine(row);
     }
@@ -221,18 +246,24 @@ namespace TodoListApp
     internal class Program
     {
         private const int InitialTasksCapacity = 2;
-        private const string DateFormat = "yyyy";
         private static TodoList todoList = new TodoList(InitialTasksCapacity);
+        private static Profile userProfile;
 
         static void Main(string[] args)
-        {
+        {   
             Console.WriteLine("Работу выполнил Соловьёв Евгений и Тареев Юрий");
-
-            var user = CreateUserProfile();
-            RunTodoApplication(user);
+            userProfile = CreateUserProfile();
+            if (userProfile != null)
+            {
+                RunTodoApplication(userProfile);
+            }
+            else
+            {
+                Console.WriteLine("Не удалось создать профиль пользователя.");
+            }
         }
 
-        static (string Name, string Surname, int Age) CreateUserProfile()
+        static Profile CreateUserProfile()
         {
             Console.WriteLine("Введите Имя");
             string name = Console.ReadLine();
@@ -240,7 +271,7 @@ namespace TodoListApp
             if (string.IsNullOrWhiteSpace(name))
             {
                 Console.WriteLine("Ошибка: Имя не может быть пустым");
-                return ("", "", 0);
+                return null;
             }
 
             Console.WriteLine("Введите Фамилию");
@@ -249,7 +280,7 @@ namespace TodoListApp
             if (string.IsNullOrWhiteSpace(surname))
             {
                 Console.WriteLine("Ошибка: Фамилия не может быть пустой");
-                return ("", "", 0);
+                return null;
             }
 
             Console.WriteLine("Введите Год Рождения");
@@ -258,24 +289,22 @@ namespace TodoListApp
             if (string.IsNullOrWhiteSpace(input))
             {
                 Console.WriteLine("Ошибка: Год рождения не может быть пустым");
-                return ("", "", 0);
+                return null;
             }
 
             if (!int.TryParse(input, out int birthYear))
             {
                 Console.WriteLine("Ошибка: Неверный формат года рождения");
-                return ("", "", 0);
+                return null;
             }
 
-            int currentYear = int.Parse(DateTime.Now.ToString(DateFormat));
-            int age = currentYear - birthYear;
+            var profile = new Profile(name, surname, birthYear);
+            Console.WriteLine($"Добавлен пользователь {profile.GetInfo()}");
 
-            Console.WriteLine($"Добавлен пользователь {name} {surname} возраст - {age}");
-
-            return (name, surname, age);
+            return profile;
         }
 
-        static void RunTodoApplication((string Name, string Surname, int Age) user)
+        static void RunTodoApplication(Profile user)
         {
             bool isRunning = true;
 
@@ -423,13 +452,17 @@ exit - завершает цикл и останавливает выполне�
             Console.WriteLine(helpText);
         }
 
-        static void ShowUserProfile((string Name, string Surname, int Age) user)
+        static void ShowUserProfile(Profile user)
         {
+            if (user == null)
+            {
+                Console.WriteLine("Профиль пользователя не создан.");
+                return;
+            }
+
             string profile = @$"
 Данные пользователя:
-Имя: {user.Name}
-Фамилия: {user.Surname}
-Возраст: {user.Age}";
+{user.GetInfo()}";
 
             Console.WriteLine(profile);
         }
@@ -499,10 +532,17 @@ exit - завершает цикл и останавливает выполне�
             }
 
             bool showIndex = commandData.ShowIndexFlag;
-            bool showDate = commandData.ShowDateFlag;
             bool showStatus = commandData.ShowStatusFlag;
+            bool showDate = commandData.ShowDateFlag;
 
-            bool showOnlyText = !showIndex && !showStatus && !showDate && !commandData.ShowAllFlag;
+            if (commandData.ShowAllFlag)
+            {
+                showIndex = true;
+                showStatus = true;
+                showDate = true;
+            }
+
+            bool showOnlyText = !showIndex && !showStatus && !showDate;
 
             if (showOnlyText)
             {
@@ -518,8 +558,8 @@ exit - завершает цикл и останавливает выполне�
             }
             else
             {
-                bool showAllDetails = commandData.ShowAllFlag || showIndex || showStatus || showDate;
-                todoList.View(showIndex, !showIncompleteOnly, showDate);
+                bool showDone = !showIncompleteOnly;
+                todoList.View(showIndex, showDone, showDate, showStatus);
             }
 
             if (showStatistics)
