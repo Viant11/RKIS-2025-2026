@@ -48,9 +48,9 @@ class TodoList
             PrintTableHeader(showIndex, showStatus, showDate);
         }
 
-        for (int i = 0; i < taskCount; i++)
+        for (int i = 0; i < _taskCount; i++)
         {
-            if (!showDone && tasks[i].IsDone)
+            if (!showDone && _tasks[i].IsDone)
                 continue;
 
             if (showIndex || showDate || showStatus)
@@ -59,9 +59,7 @@ class TodoList
             }
             else
             {
-                string cleanText = tasks[i].Text.Replace("\n", " ").Replace("\r", " ");
-                string shortText = cleanText.Length > 30 ? cleanText.Substring(0, 27) + "..." : cleanText;
-                Console.WriteLine(shortText);
+                Console.WriteLine(_tasks[i].GetShortInfo());
             }
         }
     }
