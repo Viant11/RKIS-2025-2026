@@ -1,28 +1,10 @@
 ﻿using System;
 
-class TodoItem
+public class TodoItem
 {
-    private string text;
-    private bool isDone;
-    private DateTime lastUpdate;
-
-    public string Text
-    {
-        get => text;
-        private set => text = value;
-    }
-
-    public bool IsDone
-    {
-        get => isDone;
-        private set => isDone = value;
-    }
-
-    public DateTime LastUpdate
-    {
-        get => lastUpdate;
-        private set => lastUpdate = value;
-    }
+    public string Text { get; private set; }
+    public bool IsDone { get; private set; }
+    public DateTime LastUpdate { get; private set; }
 
     public TodoItem(string text)
     {
