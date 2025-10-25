@@ -338,9 +338,9 @@ exit - завершает цикл и останавливает выполне�
                     if (showIncompleteOnly && todoList.GetTask(i).IsDone)
                         continue;
 
-                    string cleanText = todoList.GetTask(i).Text.Replace("\n", " ").Replace("\r", " ");
-                    string shortText = cleanText.Length > 30 ? cleanText.Substring(0, 27) + "..." : cleanText;
-                    Console.WriteLine(shortText);
+                    string shortInfo = todoList.GetTask(i).GetShortInfo();
+                    string[] parts = shortInfo.Split(new[] { " | " }, StringSplitOptions.None);
+                    Console.WriteLine(parts.Length > 0 ? parts[0].Trim() : shortInfo);
                 }
             }
             else
