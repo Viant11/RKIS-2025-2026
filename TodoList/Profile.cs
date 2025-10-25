@@ -6,23 +6,9 @@ class Profile
     private string lastName;
     private int birthYear;
 
-    public string FirstName
-    {
-        get => firstName;
-        private set => firstName = value;
-    }
-
-    public string LastName
-    {
-        get => lastName;
-        private set => lastName = value;
-    }
-
-    public int BirthYear
-    {
-        get => birthYear;
-        private set => birthYear = value;
-    }
+    public string FirstName { get; private set; }
+    public string LastName { get; private set; }
+    public int BirthYear { get; private set; }
 
     public Profile(string firstName, string lastName, int birthYear)
     {
