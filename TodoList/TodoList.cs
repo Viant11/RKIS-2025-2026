@@ -146,9 +146,7 @@ class TodoList
         if (showIndex)
             row += $"#{index + 1}".PadRight(8) + " | ";
 
-        string cleanText = tasks[index].Text.Replace("\n", " ").Replace("\r", " ");
-        string shortText = cleanText.Length > 30 ? cleanText.Substring(0, 27) + "..." : cleanText;
-        string status = tasks[index].IsDone ? "Выполнена" : "Не выполнена";
+        Console.WriteLine(tasks[i].GetShortInfo());
 
         row += shortText.PadRight(33) + " | ";
 
