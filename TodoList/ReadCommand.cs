@@ -1,12 +1,18 @@
 public class ReadCommand : ICommand
 {
-    public TodoList TodoList { get; set; }
-    public string Argument { get; set; }
+    public TodoList? TodoList { get; set; }
+    public string? Argument { get; set; }
 
     public void Execute()
     {
         try
         {
+            if (TodoList == null)
+            {
+                Console.WriteLine("Ошибка: TodoList не инициализирован");
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(Argument))
             {
                 Console.WriteLine("Ошибка: Укажите индекс задачи. Пример: read 1");

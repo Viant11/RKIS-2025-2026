@@ -1,8 +1,8 @@
 using System;
 
-public static class CommandParser
+static class CommandParser
 {
-    public static ICommand Parse(string inputString, TodoList todoList, Profile profile)
+    public static ICommand Parse(string inputString, TodoList? todoList, Profile? profile)
     {
         if (string.IsNullOrWhiteSpace(inputString))
             return new UnknownCommand();
@@ -13,10 +13,8 @@ public static class CommandParser
         {
             case "help":
                 return new HelpCommand();
-
             case "profile":
                 return new ProfileCommand { UserProfile = profile };
-
             case "add":
                 return new AddCommand
                 {
@@ -24,7 +22,6 @@ public static class CommandParser
                     TaskDescription = commandData.Argument,
                     MultilineFlag = commandData.MultilineFlag
                 };
-
             case "view":
                 return new ViewCommand
                 {
@@ -36,38 +33,16 @@ public static class CommandParser
                     IncompleteFlag = commandData.IncompleteFlag,
                     StatisticsFlag = commandData.StatisticsFlag
                 };
-
             case "read":
-                return new ReadCommand
-                {
-                    TodoList = todoList,
-                    Argument = commandData.Argument
-                };
-
+                return new ReadCommand { TodoList = todoList, Argument = commandData.Argument };
             case "done":
-                return new DoneCommand
-                {
-                    TodoList = todoList,
-                    Argument = commandData.Argument
-                };
-
+                return new DoneCommand { TodoList = todoList, Argument = commandData.Argument };
             case "delete":
-                return new DeleteCommand
-                {
-                    TodoList = todoList,
-                    Argument = commandData.Argument
-                };
-
+                return new DeleteCommand { TodoList = todoList, Argument = commandData.Argument };
             case "update":
-                return new UpdateCommand
-                {
-                    TodoList = todoList,
-                    Argument = commandData.Argument
-                };
-
+                return new UpdateCommand { TodoList = todoList, Argument = commandData.Argument };
             case "exit":
                 return new ExitCommand();
-
             default:
                 return new UnknownCommand();
         }

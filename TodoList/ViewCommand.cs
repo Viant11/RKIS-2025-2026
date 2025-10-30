@@ -1,6 +1,6 @@
 public class ViewCommand : ICommand
 {
-    public TodoList TodoList { get; set; }
+    public TodoList? TodoList { get; set; }
     public bool ShowIndexFlag { get; set; }
     public bool ShowStatusFlag { get; set; }
     public bool ShowDateFlag { get; set; }
@@ -10,6 +10,12 @@ public class ViewCommand : ICommand
 
     public void Execute()
     {
+        if (TodoList == null)
+        {
+            Console.WriteLine("Ошибка: TodoList не инициализирован");
+            return;
+        }
+
         bool showIncompleteOnly = IncompleteFlag;
         bool showStatistics = StatisticsFlag;
 

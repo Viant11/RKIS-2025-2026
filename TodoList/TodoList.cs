@@ -1,6 +1,6 @@
 ﻿using System;
 
-class TodoList
+public class TodoList
 {
     private TodoItem[] tasks;
     private int taskCount;
@@ -146,7 +146,10 @@ class TodoList
         if (showIndex)
             row += $"#{index + 1}".PadRight(8) + " | ";
 
-        Console.WriteLine(tasks[i].GetShortInfo());
+        var task = tasks[index];
+        string cleanText = task.Text.Replace("\n", " ").Replace("\r", " ");
+        string shortText = cleanText.Length > 30 ? cleanText.Substring(0, 27) + "..." : cleanText;
+        string status = task.IsDone ? "Выполнена" : "Не выполнена";
 
         row += shortText.PadRight(33) + " | ";
 
@@ -154,7 +157,7 @@ class TodoList
             row += status.PadRight(12);
 
         if (showDate)
-            row += (showStatus ? " | " : "") + tasks[index].LastUpdate.ToString("dd.MM.yyyy HH:mm");
+            row += (showStatus ? " | " : "") + task.LastUpdate.ToString("dd.MM.yyyy HH:mm");
 
         Console.WriteLine(row);
     }

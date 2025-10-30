@@ -1,11 +1,7 @@
 ﻿using System;
 
-class Profile
+public class Profile
 {
-    private string firstName;
-    private string lastName;
-    private int birthYear;
-
     public string FirstName { get; private set; }
     public string LastName { get; private set; }
     public int BirthYear { get; private set; }
