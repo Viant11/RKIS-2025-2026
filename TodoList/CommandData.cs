@@ -1,4 +1,4 @@
-﻿struct CommandData
+﻿public struct CommandData
 {
     public string Command;
     public string Argument;
