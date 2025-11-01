@@ -26,7 +26,7 @@ namespace TodoListApp
                 Console.WriteLine("Не удалось создать профиль пользователя.");
             }
         }
-
+         
         static Profile? CreateUserProfile()
         {
             try
