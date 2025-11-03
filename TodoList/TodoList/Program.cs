@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 
 namespace TodoListApp
 {
@@ -11,10 +10,6 @@ namespace TodoListApp
 
         static void Main(string[] args)
         {
-
-            Console.OutputEncoding = Encoding.UTF8;
-            Console.InputEncoding = Encoding.UTF8;
-
             Console.WriteLine("Работу выполнил Соловьёв Евгений и Тареев Юрий");
             userProfile = CreateUserProfile();
             if (userProfile != null)
@@ -26,7 +21,7 @@ namespace TodoListApp
                 Console.WriteLine("Не удалось создать профиль пользователя.");
             }
         }
-         
+
         static Profile? CreateUserProfile()
         {
             try

@@ -1,4 +1,4 @@
-ï»¿public class DoneCommand : ICommand
+public class DoneCommand : ICommand
 {
     public TodoList? TodoList { get; set; }
     public string? Argument { get; set; }
@@ -9,29 +9,29 @@
         {
             if (TodoList == null)
             {
-                Console.WriteLine("ĞÑˆĞ¸Ğ±ĞºĞ°: TodoList Ğ½Ğµ Ğ¸Ğ½Ğ¸Ñ†Ğ¸Ğ°Ğ»Ğ¸Ğ·Ğ¸Ñ€Ğ¾Ğ²Ğ°Ğ½");
+                Console.WriteLine("Îøèáêà: TodoList íå èíèöèàëèçèğîâàí");
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(Argument))
             {
-                Console.WriteLine("ĞÑˆĞ¸Ğ±ĞºĞ°: Ğ£ĞºĞ°Ğ¶Ğ¸Ñ‚Ğµ Ğ¸Ğ½Ğ´ĞµĞºÑ Ğ·Ğ°Ğ´Ğ°Ñ‡Ğ¸. ĞŸÑ€Ğ¸Ğ¼ĞµÑ€: done 1");
+                Console.WriteLine("Îøèáêà: Óêàæèòå èíäåêñ çàäà÷è. Ïğèìåğ: done 1");
                 return;
             }
 
             if (int.TryParse(Argument, out int index) && index > 0 && index <= TodoList.Count)
             {
                 TodoList.MarkAsDone(index - 1);
-                Console.WriteLine($"Ğ—Ğ°Ğ´Ğ°Ñ‡Ğ° {index} Ğ¾Ñ‚Ğ¼ĞµÑ‡ĞµĞ½Ğ° ĞºĞ°Ğº Ğ²Ñ‹Ğ¿Ğ¾Ğ»Ğ½ĞµĞ½Ğ½Ğ°Ñ");
+                Console.WriteLine($"Çàäà÷à {index} îòìå÷åíà êàê âûïîëíåííàÿ");
             }
             else
             {
-                Console.WriteLine("ĞÑˆĞ¸Ğ±ĞºĞ°: ĞĞµĞ²ĞµÑ€Ğ½Ñ‹Ğ¹ Ğ¸Ğ½Ğ´ĞµĞºÑ Ğ·Ğ°Ğ´Ğ°Ñ‡Ğ¸. ĞŸÑ€Ğ¸Ğ¼ĞµÑ€: done 1");
+                Console.WriteLine("Îøèáêà: Íåâåğíûé èíäåêñ çàäà÷è. Ïğèìåğ: done 1");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"ĞÑˆĞ¸Ğ±ĞºĞ° Ğ¿Ñ€Ğ¸ Ğ¾Ñ‚Ğ¼ĞµÑ‚ĞºĞµ Ğ·Ğ°Ğ´Ğ°Ñ‡Ğ¸: {ex.Message}");
+            Console.WriteLine($"Îøèáêà ïğè îòìåòêå çàäà÷è: {ex.Message}");
         }
     }
 }

@@ -1,4 +1,4 @@
-ï»¿public class DeleteCommand : ICommand
+public class DeleteCommand : ICommand
 {
     public TodoList? TodoList { get; set; }
     public string? Argument { get; set; }
@@ -9,29 +9,29 @@
         {
             if (TodoList == null)
             {
-                Console.WriteLine("ĞÑˆĞ¸Ğ±ĞºĞ°: TodoList Ğ½Ğµ Ğ¸Ğ½Ğ¸Ñ†Ğ¸Ğ°Ğ»Ğ¸Ğ·Ğ¸Ñ€Ğ¾Ğ²Ğ°Ğ½");
+                Console.WriteLine("Îøèáêà: TodoList íå èíèöèàëèçèğîâàí");
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(Argument))
             {
-                Console.WriteLine("ĞÑˆĞ¸Ğ±ĞºĞ°: Ğ£ĞºĞ°Ğ¶Ğ¸Ñ‚Ğµ Ğ¸Ğ½Ğ´ĞµĞºÑ Ğ·Ğ°Ğ´Ğ°Ñ‡Ğ¸. ĞŸÑ€Ğ¸Ğ¼ĞµÑ€: delete 1");
+                Console.WriteLine("Îøèáêà: Óêàæèòå èíäåêñ çàäà÷è. Ïğèìåğ: delete 1");
                 return;
             }
 
             if (int.TryParse(Argument, out int index) && index > 0 && index <= TodoList.Count)
             {
                 TodoList.Delete(index - 1);
-                Console.WriteLine($"Ğ—Ğ°Ğ´Ğ°Ñ‡Ğ° {index} ÑƒĞ´Ğ°Ğ»ĞµĞ½Ğ°");
+                Console.WriteLine($"Çàäà÷à {index} óäàëåíà");
             }
             else
             {
-                Console.WriteLine("ĞÑˆĞ¸Ğ±ĞºĞ°: ĞĞµĞ²ĞµÑ€Ğ½Ñ‹Ğ¹ Ğ¸Ğ½Ğ´ĞµĞºÑ Ğ·Ğ°Ğ´Ğ°Ñ‡Ğ¸. ĞŸÑ€Ğ¸Ğ¼ĞµÑ€: delete 1");
+                Console.WriteLine("Îøèáêà: Íåâåğíûé èíäåêñ çàäà÷è. Ïğèìåğ: delete 1");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"ĞÑˆĞ¸Ğ±ĞºĞ° Ğ¿Ñ€Ğ¸ ÑƒĞ´Ğ°Ğ»ĞµĞ½Ğ¸Ğ¸ Ğ·Ğ°Ğ´Ğ°Ñ‡Ğ¸: {ex.Message}");
+            Console.WriteLine($"Îøèáêà ïğè óäàëåíèè çàäà÷è: {ex.Message}");
         }
     }
 }

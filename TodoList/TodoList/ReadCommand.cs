@@ -1,4 +1,4 @@
-п»їpublic class ReadCommand : ICommand
+public class ReadCommand : ICommand
 {
     public TodoList? TodoList { get; set; }
     public string? Argument { get; set; }
@@ -9,19 +9,19 @@
         {
             if (TodoList == null)
             {
-                Console.WriteLine("РћС€РёР±РєР°: TodoList РЅРµ РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅ");
+                Console.WriteLine("Ошибка: TodoList не инициализирован");
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(Argument))
             {
-                Console.WriteLine("РћС€РёР±РєР°: РЈРєР°Р¶РёС‚Рµ РёРЅРґРµРєСЃ Р·Р°РґР°С‡Рё. РџСЂРёРјРµСЂ: read 1");
+                Console.WriteLine("Ошибка: Укажите индекс задачи. Пример: read 1");
                 return;
             }
 
             if (!int.TryParse(Argument, out int index) || index <= 0 || index > TodoList.Count)
             {
-                Console.WriteLine("РћС€РёР±РєР°: РќРµРІРµСЂРЅС‹Р№ РёРЅРґРµРєСЃ Р·Р°РґР°С‡Рё. РџСЂРёРјРµСЂ: read 1");
+                Console.WriteLine("Ошибка: Неверный индекс задачи. Пример: read 1");
                 return;
             }
 
@@ -29,7 +29,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"РћС€РёР±РєР° РїСЂРё С‡С‚РµРЅРёРё Р·Р°РґР°С‡Рё: {ex.Message}");
+            Console.WriteLine($"Ошибка при чтении задачи: {ex.Message}");
         }
     }
 }

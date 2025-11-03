@@ -1,4 +1,4 @@
-п»їusing System;
+using System;
 
 public class AddCommand : ICommand
 {
@@ -10,7 +10,7 @@ public class AddCommand : ICommand
     {
         if (TodoList == null)
         {
-            Console.WriteLine("РћС€РёР±РєР°: TodoList РЅРµ РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅ");
+            Console.WriteLine("Ошибка: TodoList не инициализирован");
             return;
         }
 
@@ -22,7 +22,7 @@ public class AddCommand : ICommand
 
             if (string.IsNullOrWhiteSpace(taskText))
             {
-                Console.WriteLine("РћС€РёР±РєР°: Р—Р°РґР°С‡Р° РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РїСѓСЃС‚РѕР№");
+                Console.WriteLine("Ошибка: Задача не может быть пустой");
                 return;
             }
         }
@@ -30,7 +30,7 @@ public class AddCommand : ICommand
         {
             if (string.IsNullOrWhiteSpace(TaskDescription))
             {
-                Console.WriteLine("РћС€РёР±РєР°: РЈРєР°Р¶РёС‚Рµ Р·Р°РґР°С‡Сѓ. РџСЂРёРјРµСЂ: add РќРѕРІР°СЏ Р·Р°РґР°С‡Р°");
+                Console.WriteLine("Ошибка: Укажите задачу. Пример: add Новая задача");
                 return;
             }
 
@@ -38,12 +38,12 @@ public class AddCommand : ICommand
         }
 
         TodoList.Add(new TodoItem(taskText));
-        Console.WriteLine("Р—Р°РґР°С‡Р° РґРѕР±Р°РІР»РµРЅР°!");
+        Console.WriteLine("Задача добавлена!");
     }
 
     private string ReadMultilineInput()
     {
-        Console.WriteLine("РњРЅРѕРіРѕСЃС‚СЂРѕС‡РЅС‹Р№ СЂРµР¶РёРј. Р’РІРѕРґРёС‚Рµ С‚РµРєСЃС‚ Р·Р°РґР°С‡Рё РїРѕСЃС‚СЂРѕС‡РЅРѕ. Р”Р»СЏ Р·Р°РІРµСЂС€РµРЅРёСЏ РІРІРµРґРёС‚Рµ !end");
+        Console.WriteLine("Многострочный режим. Вводите текст задачи построчно. Для завершения введите !end");
         string result = "";
         string? line;
 

@@ -1,7 +1,7 @@
-public class UnknownCommand : ICommand
+п»їpublic class UnknownCommand : ICommand
 {
     public void Execute()
     {
-        Console.WriteLine("Неизвестная команда. Введите команду help для просмотра доступных команд");
+        Console.WriteLine("РќРµРёР·РІРµСЃС‚РЅР°СЏ РєРѕРјР°РЅРґР°. Р’РІРµРґРёС‚Рµ РєРѕРјР°РЅРґСѓ help РґР»СЏ РїСЂРѕСЃРјРѕС‚СЂР° РґРѕСЃС‚СѓРїРЅС‹С… РєРѕРјР°РЅРґ");
     }
 }

@@ -1,8 +1,8 @@
-public class ExitCommand : ICommand
+п»їpublic class ExitCommand : ICommand
 {
     public void Execute()
     {
-        Console.WriteLine("Программа завершена.");
+        Console.WriteLine("РџСЂРѕРіСЂР°РјРјР° Р·Р°РІРµСЂС€РµРЅР°.");
         Environment.Exit(0);
     }
 }

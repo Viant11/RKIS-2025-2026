@@ -1,4 +1,4 @@
-п»їpublic class ViewCommand : ICommand
+public class ViewCommand : ICommand
 {
     public TodoList? TodoList { get; set; }
     public bool ShowIndexFlag { get; set; }
@@ -12,7 +12,7 @@
     {
         if (TodoList == null)
         {
-            Console.WriteLine("РћС€РёР±РєР°: TodoList РЅРµ РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅ");
+            Console.WriteLine("Ошибка: TodoList не инициализирован");
             return;
         }
 
@@ -21,7 +21,7 @@
 
         if (TodoList.Count == 0)
         {
-            Console.WriteLine("РЎРїРёСЃРѕРє Р·Р°РґР°С‡ РїСѓСЃС‚.");
+            Console.WriteLine("Список задач пуст.");
             return;
         }
 
@@ -62,16 +62,16 @@
             int totalCount = TodoList.Count;
             int displayedCount = showIncompleteOnly ? totalCount - completedCount : totalCount;
 
-            Console.WriteLine("\n=== РЎС‚Р°С‚РёСЃС‚РёРєР° ===");
-            Console.WriteLine($"Р’СЃРµРіРѕ Р·Р°РґР°С‡: {totalCount}");
-            Console.WriteLine($"Р’С‹РїРѕР»РЅРµРЅРѕ: {completedCount}");
-            Console.WriteLine($"РќРµ РІС‹РїРѕР»РЅРµРЅРѕ: {totalCount - completedCount}");
-            Console.WriteLine($"РџРѕРєР°Р·Р°РЅРѕ: {displayedCount}");
+            Console.WriteLine("\n=== Статистика ===");
+            Console.WriteLine($"Всего задач: {totalCount}");
+            Console.WriteLine($"Выполнено: {completedCount}");
+            Console.WriteLine($"Не выполнено: {totalCount - completedCount}");
+            Console.WriteLine($"Показано: {displayedCount}");
 
             if (totalCount > 0)
             {
                 double completionRate = (double)completedCount / totalCount * 100;
-                Console.WriteLine($"РџСЂРѕС†РµРЅС‚ РІС‹РїРѕР»РЅРµРЅРёСЏ: {completionRate:F1}%");
+                Console.WriteLine($"Процент выполнения: {completionRate:F1}%");
             }
         }
     }

@@ -1,4 +1,4 @@
-п»їpublic class ProfileCommand : ICommand
+public class ProfileCommand : ICommand
 {
     public Profile? UserProfile { get; set; }
 
@@ -6,12 +6,12 @@
     {
         if (UserProfile == null)
         {
-            Console.WriteLine("РџСЂРѕС„РёР»СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РЅРµ СЃРѕР·РґР°РЅ.");
+            Console.WriteLine("Профиль пользователя не создан.");
             return;
         }
 
         string profile = @$"
-Р”Р°РЅРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ:
+Данные пользователя:
 {UserProfile.GetInfo()}";
 
         Console.WriteLine(profile);

@@ -1,4 +1,4 @@
-п»їpublic class UpdateCommand : ICommand
+public class UpdateCommand : ICommand
 {
     public TodoList? TodoList { get; set; }
     public string? Argument { get; set; }
@@ -9,19 +9,19 @@
         {
             if (TodoList == null)
             {
-                Console.WriteLine("РћС€РёР±РєР°: TodoList РЅРµ РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅ");
+                Console.WriteLine("Ошибка: TodoList не инициализирован");
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(Argument))
             {
-                Console.WriteLine("РћС€РёР±РєР°: РЈРєР°Р¶РёС‚Рµ РёРЅРґРµРєСЃ Рё РЅРѕРІС‹Р№ С‚РµРєСЃС‚ Р·Р°РґР°С‡Рё. РџСЂРёРјРµСЂ: update 1 \"РќРѕРІС‹Р№ С‚РµРєСЃС‚\"");
+                Console.WriteLine("Ошибка: Укажите индекс и новый текст задачи. Пример: update 1 \"Новый текст\"");
                 return;
             }
 
             if (!Argument.Contains(" "))
             {
-                Console.WriteLine("РћС€РёР±РєР°: РќРµРІРµСЂРЅС‹Р№ С„РѕСЂРјР°С‚ РєРѕРјР°РЅРґС‹. РџСЂРёРјРµСЂ: update 1 \"РќРѕРІС‹Р№ С‚РµРєСЃС‚\"");
+                Console.WriteLine("Ошибка: Неверный формат команды. Пример: update 1 \"Новый текст\"");
                 return;
             }
 
@@ -31,7 +31,7 @@
 
             if (!int.TryParse(indexStr, out int index) || index <= 0 || index > TodoList.Count)
             {
-                Console.WriteLine("РћС€РёР±РєР°: РќРµРІРµСЂРЅС‹Р№ РёРЅРґРµРєСЃ Р·Р°РґР°С‡Рё. РџСЂРёРјРµСЂ: update 1 \"РќРѕРІС‹Р№ С‚РµРєСЃС‚\"");
+                Console.WriteLine("Ошибка: Неверный индекс задачи. Пример: update 1 \"Новый текст\"");
                 return;
             }
 
@@ -42,16 +42,16 @@
 
             if (string.IsNullOrWhiteSpace(newText))
             {
-                Console.WriteLine("РћС€РёР±РєР°: РќРѕРІС‹Р№ С‚РµРєСЃС‚ Р·Р°РґР°С‡Рё РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РїСѓСЃС‚С‹Рј");
+                Console.WriteLine("Ошибка: Новый текст задачи не может быть пустым");
                 return;
             }
 
             TodoList.UpdateText(index - 1, newText);
-            Console.WriteLine($"Р—Р°РґР°С‡Р° {index} РѕР±РЅРѕРІР»РµРЅР°");
+            Console.WriteLine($"Задача {index} обновлена");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"РћС€РёР±РєР° РїСЂРё РѕР±РЅРѕРІР»РµРЅРёРё Р·Р°РґР°С‡Рё: {ex.Message}");
+            Console.WriteLine($"Ошибка при обновлении задачи: {ex.Message}");
         }
     }
 }
