@@ -23,6 +23,8 @@
             {
                 TodoList.Delete(index - 1);
                 Console.WriteLine($"Задача {index} удалена");
+
+                FileManager.SaveTodos(TodoList, GetTodoFilePath());
             }
             else
             {
@@ -33,5 +35,11 @@
         {
             Console.WriteLine($"Ошибка при удалении задачи: {ex.Message}");
         }
+    }
+
+    private string GetTodoFilePath()
+    {
+        string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "data");
+        return Path.Combine(dataDir, "todo.csv");
     }
 }

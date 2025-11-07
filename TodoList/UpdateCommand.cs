@@ -48,10 +48,18 @@
 
             TodoList.UpdateText(index - 1, newText);
             Console.WriteLine($"Задача {index} обновлена");
+
+            FileManager.SaveTodos(TodoList, GetTodoFilePath());
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Ошибка при обновлении задачи: {ex.Message}");
         }
+    }
+
+    private string GetTodoFilePath()
+    {
+        string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "data");
+        return Path.Combine(dataDir, "todo.csv");
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 public class AddCommand : ICommand
 {
@@ -39,6 +40,19 @@ public class AddCommand : ICommand
 
         TodoList.Add(new TodoItem(taskText));
         Console.WriteLine("Задача добавлена!");
+
+        try
+        {
+            string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "data");
+            string todoFilePath = Path.Combine(dataDir, "todo.csv");
+
+            FileManager.EnsureDataDirectory(dataDir);
+            FileManager.SaveTodos(TodoList, todoFilePath);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка при сохранении задач: {ex.Message}");
+        }
     }
 
     private string ReadMultilineInput()
