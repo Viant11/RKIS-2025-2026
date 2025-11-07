@@ -1,14 +1,29 @@
 ﻿using System;
-using System.IO;
 using System.Globalization;
+using System.IO;
+using System.Text;
 
 public static class FileManager
 {
     public static void EnsureDataDirectory(string dirPath)
     {
-        if (!Directory.Exists(dirPath))
+        try
         {
-            Directory.CreateDirectory(dirPath);
+            if (!Directory.Exists(dirPath))
+            {
+                Console.WriteLine($"Создаем папку для данных: {dirPath}");
+                Directory.CreateDirectory(dirPath);
+                Console.WriteLine($"Папка создана: {dirPath}");
+            }
+            else
+            {
+                Console.WriteLine($"Папка уже существует: {dirPath}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка при создании папки {dirPath}: {ex.Message}");
+            throw;
         }
     }
 
@@ -16,12 +31,17 @@ public static class FileManager
     {
         try
         {
-            using (StreamWriter writer = new StreamWriter(filePath))
-            {
-                writer.WriteLine(profile.FirstName);
-                writer.WriteLine(profile.LastName);
-                writer.WriteLine(profile.BirthYear);
-            }
+            Console.WriteLine($"Сохранение профиля в: {filePath}");
+
+            string[] lines = {
+                profile.FirstName,
+                profile.LastName,
+                profile.BirthYear.ToString()
+            };
+
+            File.WriteAllLines(filePath, lines, Encoding.UTF8);
+
+            Console.WriteLine($"Профиль сохранен: {profile.FirstName} {profile.LastName}");
         }
         catch (Exception ex)
         {
@@ -34,18 +54,41 @@ public static class FileManager
         try
         {
             if (!File.Exists(filePath))
-                return null;
-
-            using (StreamReader reader = new StreamReader(filePath))
             {
-                string firstName = reader.ReadLine() ?? "";
-                string lastName = reader.ReadLine() ?? "";
-                string birthYearStr = reader.ReadLine() ?? "";
+                Console.WriteLine($"Файл профиля не найден: {filePath}");
+                return null;
+            }
+
+            string[] lines = File.ReadAllLines(filePath, Encoding.UTF8);
+
+            if (lines.Length >= 3)
+            {
+                string firstName = lines[0];
+                string lastName = lines[1];
+                string birthYearStr = lines[2];
+
+                Console.WriteLine($"Загружаем из файла: Имя='{firstName}', Фамилия='{lastName}', Год='{birthYearStr}'");
+
+                if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
+                {
+                    Console.WriteLine("Ошибка: Имя или фамилия пустые в файле");
+                    return null;
+                }
 
                 if (int.TryParse(birthYearStr, out int birthYear))
                 {
-                    return new Profile(firstName, lastName, birthYear);
+                    var profile = new Profile(firstName.Trim(), lastName.Trim(), birthYear);
+                    Console.WriteLine($"Успешно загружен профиль: {profile.GetInfo()}");
+                    return profile;
                 }
+                else
+                {
+                    Console.WriteLine($"Ошибка: неверный формат года рождения: '{birthYearStr}'");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Ошибка: файл профиля поврежден или имеет неверный формат.");
             }
         }
         catch (Exception ex)
@@ -60,7 +103,13 @@ public static class FileManager
     {
         try
         {
-            using (StreamWriter writer = new StreamWriter(filePath))
+            string? directory = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            using (StreamWriter writer = new StreamWriter(filePath, false, new UTF8Encoding(false)))
             {
                 writer.WriteLine("Index;Text;IsDone;LastUpdate");
 
@@ -90,7 +139,7 @@ public static class FileManager
             if (!File.Exists(filePath))
                 return todoList;
 
-            using (StreamReader reader = new StreamReader(filePath))
+            using (StreamReader reader = new StreamReader(filePath, Encoding.UTF8, true))
             {
                 string? header = reader.ReadLine();
                 if (header == null || header != "Index;Text;IsDone;LastUpdate")

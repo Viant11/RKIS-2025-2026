@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Globalization;
+using System.IO;
 using System.Text;
 
 namespace TodoListApp
@@ -11,12 +13,18 @@ namespace TodoListApp
 
         static void Main(string[] args)
         {
-
             Console.OutputEncoding = Encoding.UTF8;
             Console.InputEncoding = Encoding.UTF8;
 
             Console.WriteLine("Работу выполнил Соловьёв Евгений и Тареев Юрий");
+
+            string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "data");
+            FileManager.EnsureDataDirectory(dataDir);
+
             userProfile = CreateUserProfile();
+
+            todoList = LoadTodos();
+
             if (userProfile != null)
             {
                 RunTodoApplication();
@@ -26,11 +34,21 @@ namespace TodoListApp
                 Console.WriteLine("Не удалось создать профиль пользователя.");
             }
         }
-         
+
         static Profile? CreateUserProfile()
         {
+            string profileFilePath = GetProfileFilePath();
+
+            Profile? profile = FileManager.LoadProfile(profileFilePath);
+
+            if (profile != null)
+            {
+                return profile;
+            }
+
             try
             {
+                Console.WriteLine("Профиль не найден, давайте создадим новый.");
                 Console.WriteLine("Введите Имя");
                 string? name = Console.ReadLine();
 
@@ -63,23 +81,55 @@ namespace TodoListApp
 
                     if (!int.TryParse(input, out birthYear))
                     {
-                        Console.WriteLine("Ошибка: Неверный формат года рождения. Введите число.");
+                        Console.WriteLine("Ошибка: Неверный формат года. Введите четыре цифры, например: 2000");
                         continue;
                     }
 
                     break;
                 }
 
-                var profile = new Profile(name, surname, birthYear);
-                Console.WriteLine($"Добавлен пользователь {profile.GetInfo()}");
+                var newProfile = new Profile(name, surname, birthYear);
+                Console.WriteLine($"Добавлен пользователь {newProfile.GetInfo()}");
 
-                return profile;
+                FileManager.SaveProfile(newProfile, profileFilePath);
+
+                return newProfile;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Произошла непредвиденная ошибка при создании профиля: {ex.Message}");
                 return null;
             }
+        }
+
+        static TodoList LoadTodos()
+        {
+            string todoFilePath = GetTodoFilePath();
+            TodoList loadedList = FileManager.LoadTodos(todoFilePath);
+
+            if (loadedList.Count > 0)
+            {
+                Console.WriteLine($"Загружено {loadedList.Count} задач из файла.");
+            }
+            else
+            {
+                Console.WriteLine("Файл задач не найден или пуст. Создан новый список задач.");
+                loadedList = new TodoList(InitialTasksCapacity);
+            }
+
+            return loadedList;
+        }
+
+        private static string GetTodoFilePath()
+        {
+            string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "data");
+            return Path.Combine(dataDir, "todo.csv");
+        }
+
+        private static string GetProfileFilePath()
+        {
+            string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "data");
+            return Path.Combine(dataDir, "profile.txt");
         }
 
         static void RunTodoApplication()
