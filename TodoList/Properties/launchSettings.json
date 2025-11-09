@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "TodoList": {
+      "commandName": "Project"
+    },
+    "Windows Terminal Debug": {
+      "commandName": "Executable",
+      "executablePath": "wt.exe",
+      "commandLineArgs": "cmd.exe /c \"cd /d \"\"$(ProjectDir)\"\" && chcp 65001 && dotnet run\"",
+      "workingDirectory": "$(ProjectDir)"
+    }
+  }
+}
