@@ -10,7 +10,7 @@ public static class FileManager
 		if (!Directory.Exists(dirPath))
 		{
 			Directory.CreateDirectory(dirPath);
-			Console.WriteLine($"Создана директория: {dirPath}");
+			Console.WriteLine($"Создана папка: {dirPath}");
 		}
 	}
 

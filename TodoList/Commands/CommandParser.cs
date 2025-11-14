@@ -1,5 +1,4 @@
 ﻿using System;
-
 static class CommandParser
 {
 	public static ICommand Parse(string inputString, TodoList? todoList, Profile? profile)
@@ -35,8 +34,8 @@ static class CommandParser
 				};
 			case "read":
 				return new ReadCommand { TodoList = todoList, Argument = commandData.Argument };
-			case "done":
-				return new DoneCommand { TodoList = todoList, Argument = commandData.Argument };
+			case "status":
+				return new StatusCommand { TodoList = todoList, Argument = commandData.Argument };
 			case "delete":
 				return new DeleteCommand { TodoList = todoList, Argument = commandData.Argument };
 			case "update":
