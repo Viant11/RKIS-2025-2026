@@ -3,26 +3,26 @@
 public class TodoItem
 {
 	public string Text { get; private set; }
-	public bool IsDone { get; private set; }
+	public TodoStatus Status { get; private set; }
 	public DateTime LastUpdate { get; private set; }
 
 	public TodoItem(string text)
 	{
 		Text = text;
-		IsDone = false;
+		Status = TodoStatus.NotStarted;
 		LastUpdate = DateTime.Now;
 	}
 
-	public TodoItem(string text, bool isDone, DateTime lastUpdate)
+	public TodoItem(string text, TodoStatus status, DateTime lastUpdate)
 	{
 		Text = text;
-		IsDone = isDone;
+		Status = status;
 		LastUpdate = lastUpdate;
 	}
 
-	public void MarkDone()
+	public void UpdateStatus(TodoStatus newStatus)
 	{
-		IsDone = true;
+		Status = newStatus;
 		LastUpdate = DateTime.Now;
 	}
 
@@ -34,7 +34,15 @@ public class TodoItem
 
 	private string GetStatusText()
 	{
-		return IsDone ? "Выполнена" : "Не выполнена";
+		switch (Status)
+		{
+			case TodoStatus.NotStarted: return "Не начато";
+			case TodoStatus.InProgress: return "В процессе";
+			case TodoStatus.Completed: return "Выполнено";
+			case TodoStatus.Postponed: return "Отложено";
+			case TodoStatus.Failed: return "Провалено";
+			default: return "Неизвестно";
+		}
 	}
 
 	public string GetShortInfo()

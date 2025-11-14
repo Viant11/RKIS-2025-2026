@@ -50,7 +50,7 @@ public class TodoList : IEnumerable<TodoItem>
 
 		for (int i = 0; i < tasks.Count; i++)
 		{
-			if (!showDone && tasks[i].IsDone)
+			if (!showDone && tasks[i].Status == TodoStatus.Completed)
 				continue;
 
 			if (showIndex || showDate || showStatus)
@@ -79,7 +79,7 @@ public class TodoList : IEnumerable<TodoItem>
 	{
 		if (index < 0 || index >= tasks.Count)
 			throw new ArgumentOutOfRangeException(nameof(index));
-		tasks[index].MarkDone();
+		tasks[index].UpdateStatus(TodoStatus.Completed);
 	}
 
 	public void UpdateText(int index, string newText)
@@ -94,7 +94,7 @@ public class TodoList : IEnumerable<TodoItem>
 		int count = 0;
 		foreach (var task in tasks)
 		{
-			if (task.IsDone)
+			if (task.Status == TodoStatus.Completed)
 				count++;
 		}
 		return count;
