@@ -1,4 +1,6 @@
-﻿public class ViewCommand : ICommand
+﻿using System;
+
+public class ViewCommand : ICommand
 {
 	public TodoList? TodoList { get; set; }
 	public bool ShowIndexFlag { get; set; }
@@ -39,10 +41,10 @@
 		{
 			for (int i = 0; i < TodoList.Count; i++)
 			{
-				if (IncompleteFlag && TodoList.GetTask(i).IsDone)
+				if (IncompleteFlag && TodoList[i].IsDone)
 					continue;
 
-				string shortInfo = TodoList.GetTask(i).GetShortInfo();
+				string shortInfo = TodoList[i].GetShortInfo();
 				string[] parts = shortInfo.Split(new[] { " | " }, StringSplitOptions.None);
 				Console.WriteLine(parts.Length > 0 ? parts[0].Trim() : shortInfo);
 			}

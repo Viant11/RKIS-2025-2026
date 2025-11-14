@@ -1,13 +1,24 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
-public class TodoList
+public class TodoList : IEnumerable<TodoItem>
 {
 	private List<TodoItem> tasks;
 
 	public int Count => tasks.Count;
 
-	public TodoList(int initialCapacity = 2)
+	public TodoItem this[int index]
+	{
+		get
+		{
+			if (index < 0 || index >= tasks.Count)
+				throw new ArgumentOutOfRangeException(nameof(index));
+			return tasks[index];
+		}
+	}
+
+	public TodoList()
 	{
 		tasks = new List<TodoItem>();
 	}
@@ -64,13 +75,6 @@ public class TodoList
 		Console.WriteLine(new string('=', 40));
 	}
 
-	public TodoItem GetTask(int index)
-	{
-		if (index < 0 || index >= tasks.Count)
-			throw new ArgumentOutOfRangeException(nameof(index));
-		return tasks[index];
-	}
-
 	public void Done(int index)
 	{
 		if (index < 0 || index >= tasks.Count)
@@ -119,5 +123,18 @@ public class TodoList
 		if (showDate) row += (showStatus ? " | " : "") + shortInfoParts[2];
 
 		Console.WriteLine(row);
+	}
+
+	public IEnumerator<TodoItem> GetEnumerator()
+	{
+		foreach (var task in tasks)
+		{
+			yield return task;
+		}
+	}
+
+	IEnumerator IEnumerable.GetEnumerator()
+	{
+		return GetEnumerator();
 	}
 }
