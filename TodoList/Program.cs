@@ -1,153 +1,124 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 
-namespace TodoListApp
+internal class Program
 {
-	internal class Program
+	public static string ProfileFilePath { get; private set; }
+	public static string TodoFilePath { get; private set; }
+
+	private static void Main(string[] args)
 	{
-		private const int InitialTasksCapacity = 2;
-		private static readonly TodoList todoList = new TodoList(InitialTasksCapacity);
-		private static Profile? userProfile;
-
-		static void Main(string[] args)
+		if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
 		{
-			Console.OutputEncoding = Encoding.UTF8;
-			Console.InputEncoding = Encoding.UTF8;
-
-			Console.WriteLine("Работу выполнил Соловьёв Евгений и Тареев Юрий");
-
-			string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "data");
-			FileManager.EnsureDataDirectory(dataDir);
-
-			userProfile = CreateUserProfile();
-			LoadTodos();
-
-			if (userProfile != null)
-			{
-				RunTodoApplication();
-			}
-			else
-			{
-				Console.WriteLine("Не удалось создать профиль пользователя.");
-			}
+			Console.InputEncoding = Encoding.Unicode;
+			Console.OutputEncoding = Encoding.Unicode;
 		}
 
-		static Profile? CreateUserProfile()
+		Console.WriteLine("Работу выполнили: Соловьёв Евгений и Тареев Юрий");
+		string dataDir = "data";
+
+		ProfileFilePath = Path.Combine(dataDir, "profile.txt");
+		TodoFilePath = Path.Combine(dataDir, "todo.csv");
+
+		FileManager.EnsureDataDirectory(dataDir);
+		Profile userProfile = FileManager.LoadProfile(ProfileFilePath) ?? CreateUserProfile(ProfileFilePath);
+		TodoList todos = FileManager.LoadTodos(TodoFilePath);
+		bool isRunning = true;
+
+		Console.WriteLine("Введите команду help для просмотра всех команд.");
+
+		while (isRunning)
 		{
-			string profileFilePath = GetProfileFilePath();
-			Profile? profile = FileManager.LoadProfile(profileFilePath);
-
-			if (profile != null)
+			Console.Write("> ");
+			string userCommand = Console.ReadLine();
+			if (userCommand?.ToLower() == "exit")
 			{
-				return profile;
+				FileManager.SaveProfile(userProfile, ProfileFilePath);
+				FileManager.SaveTodos(todos, TodoFilePath);
+				isRunning = false;
+				continue;
 			}
-
 			try
 			{
-				Console.WriteLine("Профиль не найден, давайте создадим новый.");
-				Console.WriteLine("Введите Имя");
-				string? name = Console.ReadLine();
-
-				if (string.IsNullOrWhiteSpace(name))
+				ICommand command = CommandParser.Parse(userCommand, todos, userProfile);
+				if (command != null)
 				{
-					Console.WriteLine("Ошибка: Имя не может быть пустым");
-					return null;
-				}
+					command.Execute();
 
-				Console.WriteLine("Введите Фамилию");
-				string? surname = Console.ReadLine();
-
-				if (string.IsNullOrWhiteSpace(surname))
-				{
-					Console.WriteLine("Ошибка: Фамилия не может быть пустой");
-					return null;
-				}
-
-				int birthYear;
-				while (true)
-				{
-					Console.WriteLine("Введите Год Рождения");
-					string? input = Console.ReadLine();
-
-					if (string.IsNullOrWhiteSpace(input))
+					if (command is AddCommand || command is DeleteCommand ||
+						command is UpdateCommand || command is DoneCommand)
 					{
-						Console.WriteLine("Ошибка: Год рождения не может быть пустым");
-						continue;
+						FileManager.SaveTodos(todos, TodoFilePath);
 					}
-
-					if (!int.TryParse(input, out birthYear))
-					{
-						Console.WriteLine("Ошибка: Неверный формат года. Введите четыре цифры, например: 2000");
-						continue;
-					}
-					break;
 				}
-
-				var newProfile = new Profile(name, surname, birthYear);
-				Console.WriteLine($"Добавлен пользователь {newProfile.GetInfo()}");
-				FileManager.SaveProfile(newProfile, profileFilePath);
-				return newProfile;
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine($"Произошла непредвиденная ошибка при создании профиля: {ex.Message}");
-				return null;
+				Console.WriteLine($"Ошибка: {ex.Message}");
 			}
 		}
+	}
 
-		static void LoadTodos()
+	private static Profile CreateUserProfile(string profileFilePath)
+	{
+		string name, surname;
+		int yearOfBirth;
+		string fullName;
+
+		while (true)
 		{
-			string todoFilePath = GetTodoFilePath();
-			TodoList loadedList = FileManager.LoadTodos(todoFilePath);
+			Console.WriteLine("Напишите ваше имя и фамилию:");
+			fullName = Console.ReadLine();
 
-			if (loadedList.Count > 0)
+			if (string.IsNullOrWhiteSpace(fullName))
 			{
-				for (int i = 0; i < loadedList.Count; i++)
+				Console.WriteLine("Ошибка: Имя и фамилия не могут быть пустыми.");
+				continue;
+			}
+
+			if (fullName.Any(char.IsDigit))
+			{
+				Console.WriteLine("Ошибка: Имя и фамилия не могут содержать цифры.");
+				continue;
+			}
+
+			break;
+		}
+
+		string[] splitFullName = fullName.Trim().Split(new[] { ' ' }, 2, StringSplitOptions.RemoveEmptyEntries);
+		name = splitFullName[0];
+		surname = splitFullName.Length > 1 ? splitFullName[1] : "";
+
+		int currentYear = DateTime.Now.Year;
+		while (true)
+		{
+			Console.WriteLine("Введите Год Рождения:");
+			if (int.TryParse(Console.ReadLine(), out yearOfBirth))
+			{
+				if (yearOfBirth > currentYear)
 				{
-					todoList.Add(loadedList.GetTask(i));
+					Console.WriteLine($"Ошибка: Год рождения не может быть в будущем. Пожалуйста, введите год до {currentYear}.");
 				}
-				Console.WriteLine($"Загружено {todoList.Count} задач из файла.");
+				else if (yearOfBirth < 1900)
+				{
+					Console.WriteLine("Ошибка: Указан слишком ранний год рождения. Пожалуйста, введите корректный год.");
+				}
+				else
+				{
+					break;
+				}
 			}
 			else
 			{
-				Console.WriteLine("Файл задач не найден или пуст. Создан новый список задач.");
+				Console.WriteLine("Ошибка: Неверный формат года. Введите четыре цифры, например: 2000");
 			}
 		}
 
-		public static string GetTodoFilePath()
-		{
-			string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "data");
-			return Path.Combine(dataDir, "todo.csv");
-		}
-
-		public static string GetProfileFilePath()
-		{
-			string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "data");
-			return Path.Combine(dataDir, "profile.txt");
-		}
-
-		static void RunTodoApplication()
-		{
-			Console.WriteLine("Введите команду help для просмотра всех команд.");
-			while (true)
-			{
-				try
-				{
-					Console.Write("> ");
-					string? input = Console.ReadLine();
-
-					if (string.IsNullOrWhiteSpace(input))
-						continue;
-
-					ICommand command = CommandParser.Parse(input, todoList, userProfile);
-					command.Execute();
-				}
-				catch (Exception ex)
-				{
-					Console.WriteLine($"Произошла ошибка: {ex.Message}");
-				}
-			}
-		}
+		Profile profile = new Profile(name, surname, yearOfBirth);
+		Console.WriteLine("Добавлен пользователь: " + profile.GetInfo());
+		FileManager.SaveProfile(profile, profileFilePath);
+		return profile;
 	}
 }

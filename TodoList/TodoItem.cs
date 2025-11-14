@@ -6,7 +6,6 @@ public class TodoItem
 	public bool IsDone { get; private set; }
 	public DateTime LastUpdate { get; private set; }
 
-	// Этот конструктор используется для команды "add"
 	public TodoItem(string text)
 	{
 		Text = text;
@@ -33,16 +32,21 @@ public class TodoItem
 		LastUpdate = DateTime.Now;
 	}
 
+	private string GetStatusText()
+	{
+		return IsDone ? "Выполнена" : "Не выполнена";
+	}
+
 	public string GetShortInfo()
 	{
 		string cleanText = Text.Replace("\n", " ").Replace("\r", " ");
 		string shortText = cleanText.Length > 30 ? cleanText.Substring(0, 27) + "..." : cleanText;
-		string status = IsDone ? "Выполнена" : "Не выполнена";
+		string status = GetStatusText();
 		return $"{shortText.PadRight(33)} | {status.PadRight(12)} | {LastUpdate:dd.MM.yyyy HH:mm}";
 	}
 
 	public string GetFullInfo()
 	{
-		return $"Текст: {Text}\nСтатус: {(IsDone ? "Выполнена" : "Не выполнена")}\nДата последнего изменения: {LastUpdate:dd.MM.yyyy HH:mm}";
+		return $"Текст: {Text}\nСтатус: {GetStatusText()}\nДата последнего изменения: {LastUpdate:dd.MM.yyyy HH:mm}";
 	}
 }

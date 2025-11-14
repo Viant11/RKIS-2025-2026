@@ -1,65 +1,62 @@
-﻿public class UpdateCommand : ICommand
+﻿using System;
+using System.IO;
+
+public class UpdateCommand : ICommand
 {
-    public TodoList? TodoList { get; set; }
-    public string? Argument { get; set; }
+	public TodoList? TodoList { get; set; }
+	public string? Argument { get; set; }
 
-    public void Execute()
-    {
-        try
-        {
-            if (TodoList == null)
-            {
-                Console.WriteLine("Ошибка: TodoList не инициализирован");
-                return;
-            }
+	public void Execute()
+	{
+		try
+		{
+			if (TodoList == null)
+			{
+				Console.WriteLine("Ошибка: TodoList не инициализирован");
+				return;
+			}
 
-            if (string.IsNullOrWhiteSpace(Argument))
-            {
-                Console.WriteLine("Ошибка: Укажите индекс и новый текст задачи. Пример: update 1 \"Новый текст\"");
-                return;
-            }
+			if (string.IsNullOrWhiteSpace(Argument))
+			{
+				Console.WriteLine("Ошибка: Укажите индекс и новый текст задачи. Пример: update 1 \"Новый текст\"");
+				return;
+			}
 
-            if (!Argument.Contains(" "))
-            {
-                Console.WriteLine("Ошибка: Неверный формат команды. Пример: update 1 \"Новый текст\"");
-                return;
-            }
+			if (!Argument.Contains(" "))
+			{
+				Console.WriteLine("Ошибка: Неверный формат команды. Пример: update 1 \"Новый текст\"");
+				return;
+			}
 
-            int firstSpaceIndex = Argument.IndexOf(' ');
-            string indexStr = Argument.Substring(0, firstSpaceIndex);
-            string newText = Argument.Substring(firstSpaceIndex + 1).Trim();
+			int firstSpaceIndex = Argument.IndexOf(' ');
+			string indexStr = Argument.Substring(0, firstSpaceIndex);
+			string newText = Argument.Substring(firstSpaceIndex + 1).Trim();
 
-            if (!int.TryParse(indexStr, out int index) || index <= 0 || index > TodoList.Count)
-            {
-                Console.WriteLine("Ошибка: Неверный индекс задачи. Пример: update 1 \"Новый текст\"");
-                return;
-            }
+			if (!int.TryParse(indexStr, out int index) || index <= 0 || index > TodoList.Count)
+			{
+				Console.WriteLine("Ошибка: Неверный индекс задачи. Пример: update 1 \"Новый текст\"");
+				return;
+			}
 
-            if (newText.StartsWith("\"") && newText.EndsWith("\""))
-            {
-                newText = newText.Substring(1, newText.Length - 2);
-            }
+			if (newText.StartsWith("\"") && newText.EndsWith("\""))
+			{
+				newText = newText.Substring(1, newText.Length - 2);
+			}
 
-            if (string.IsNullOrWhiteSpace(newText))
-            {
-                Console.WriteLine("Ошибка: Новый текст задачи не может быть пустым");
-                return;
-            }
+			if (string.IsNullOrWhiteSpace(newText))
+			{
+				Console.WriteLine("Ошибка: Новый текст задачи не может быть пустым");
+				return;
+			}
 
-            TodoList.UpdateText(index - 1, newText);
-            Console.WriteLine($"Задача {index} обновлена");
+			TodoList.UpdateText(index - 1, newText);
+			Console.WriteLine($"Задача {index} обновлена");
 
-            FileManager.SaveTodos(TodoList, GetTodoFilePath());
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Ошибка при обновлении задачи: {ex.Message}");
-        }
-    }
-
-    private string GetTodoFilePath()
-    {
-        string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "data");
-        return Path.Combine(dataDir, "todo.csv");
-    }
+			FileManager.SaveTodos(TodoList, Program.TodoFilePath);
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Ошибка при обновлении задачи: {ex.Message}");
+		}
+	}
 }

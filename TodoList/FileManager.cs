@@ -1,29 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
+using System.Collections.Generic;
 using System.Text;
 
 public static class FileManager
 {
 	public static void EnsureDataDirectory(string dirPath)
 	{
-		try
+		if (!Directory.Exists(dirPath))
 		{
-			if (!Directory.Exists(dirPath))
-			{
-				Directory.CreateDirectory(dirPath);
-				Console.WriteLine($"Папка создана: {dirPath}");
-			}
-			else
-			{
-				Console.WriteLine($"Папка уже существует: {dirPath}");
-			}
-		}
-		catch (Exception ex)
-		{
-			Console.WriteLine($"Ошибка при создании папки {dirPath}: {ex.Message}");
-			throw;
+			Directory.CreateDirectory(dirPath);
+			Console.WriteLine($"Создана директория: {dirPath}");
 		}
 	}
 
@@ -31,47 +18,43 @@ public static class FileManager
 	{
 		try
 		{
-			string[] lines = {
-				profile.FirstName,
-				profile.LastName,
-				profile.BirthYear.ToString()
-			};
-			File.WriteAllLines(filePath, lines, Encoding.UTF8);
-			Console.WriteLine($"Сохранение профиля в: {filePath}");
-			Console.WriteLine($"Профиль сохранен: {profile.FirstName} {profile.LastName}");
+			string profileData = $"{profile.FirstName}|{profile.LastName}|{profile.BirthYear}";
+			File.WriteAllText(filePath, profileData, Encoding.UTF8);
+			Console.WriteLine("Профиль сохранен");
 		}
 		catch (Exception ex)
 		{
-			Console.WriteLine($"Ошибка при сохранении профиля: {ex.Message}");
+			Console.WriteLine($"Ошибка сохранения профиля: {ex.Message}");
 		}
 	}
 
-	public static Profile? LoadProfile(string filePath)
+	public static Profile LoadProfile(string filePath)
 	{
 		try
 		{
 			if (!File.Exists(filePath))
 			{
+				Console.WriteLine("Файл профиля не найден");
 				return null;
 			}
-
-			string[] lines = File.ReadAllLines(filePath, Encoding.UTF8);
-
-			if (lines.Length >= 3)
+			string line = File.ReadAllText(filePath, Encoding.UTF8);
+			if (!string.IsNullOrEmpty(line))
 			{
-				string firstName = lines[0];
-				string lastName = lines[1];
-				if (int.TryParse(lines[2], out int birthYear))
+				string[] parts = line.Split('|');
+				if (parts.Length == 3)
 				{
-					var profile = new Profile(firstName.Trim(), lastName.Trim(), birthYear);
-					Console.WriteLine($"Успешно загружен профиль: {profile.GetInfo()}");
-					return profile;
+					string firstName = parts[0];
+					string lastName = parts[1];
+					if (int.TryParse(parts[2], out int birthYear))
+					{
+						return new Profile(firstName, lastName, birthYear);
+					}
 				}
 			}
 		}
 		catch (Exception ex)
 		{
-			Console.WriteLine($"Ошибка при загрузке профиля: {ex.Message}");
+			Console.WriteLine($"Ошибка загрузки профиля: {ex.Message}");
 		}
 		return null;
 	}
@@ -80,44 +63,45 @@ public static class FileManager
 	{
 		try
 		{
-			var lines = new List<string> { "Text;IsDone;LastUpdate" };
+			var lines = new List<string>();
 			for (int i = 0; i < todos.Count; i++)
 			{
-				var task = todos.GetTask(i);
-				string escapedText = task.Text.Replace("\"", "\"\"").Replace("\n", "\\n");
-				string line = $"\"{escapedText}\";{task.IsDone};{task.LastUpdate:O}";
-				lines.Add(line);
+				var item = todos.GetTask(i);
+				string escapedText = item.Text.Replace("\"", "\"\"").Replace("\n", "\\n").Replace("\r", "\\r");
+				lines.Add($"{i};\"{escapedText}\";{item.IsDone};{item.LastUpdate:yyyy-MM-dd HH:mm:ss}");
 			}
 			File.WriteAllLines(filePath, lines, Encoding.UTF8);
 		}
 		catch (Exception ex)
 		{
-			Console.WriteLine($"Ошибка при сохранении задач: {ex.Message}");
+			Console.WriteLine($"Ошибка сохранения задач: {ex.Message}");
 		}
 	}
 
 	public static TodoList LoadTodos(string filePath)
 	{
 		var todoList = new TodoList();
-		if (!File.Exists(filePath))
-			return todoList;
-
 		try
 		{
-			var lines = File.ReadAllLines(filePath, Encoding.UTF8);
-			if (lines.Length < 2) return todoList;
-
-			for (int i = 1; i < lines.Length; i++)
+			if (!File.Exists(filePath))
 			{
-				if (string.IsNullOrWhiteSpace(lines[i])) continue;
+				Console.WriteLine("Файл задач не найден");
+				return todoList;
+			}
 
-				var parts = lines[i].Split(new[] { ';' }, 3);
-				if (parts.Length == 3)
+			string[] lines = File.ReadAllLines(filePath, Encoding.UTF8);
+
+			for (int i = 0; i < lines.Length; i++)
+			{
+				string line = lines[i];
+				if (!string.IsNullOrEmpty(line))
 				{
-					string text = parts[0].Trim('"').Replace("\\n", "\n").Replace("\"\"", "\"");
-					if (bool.TryParse(parts[1], out bool isDone) &&
-						DateTime.TryParse(parts[2], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime lastUpdate))
+					string[] parts = ParseCsvLine(line, ';');
+					if (parts.Length == 4)
 					{
+						string text = parts[1].Replace("\"\"", "\"").Replace("\\n", "\n").Replace("\r", "\r");
+						bool isDone = bool.Parse(parts[2]);
+						DateTime lastUpdate = DateTime.Parse(parts[3]);
 						var todoItem = new TodoItem(text, isDone, lastUpdate);
 						todoList.Add(todoItem);
 					}
@@ -126,8 +110,42 @@ public static class FileManager
 		}
 		catch (Exception ex)
 		{
-			Console.WriteLine($"Ошибка при загрузке задач: {ex.Message}");
+			Console.WriteLine($"Ошибка загрузки задач: {ex.Message}");
 		}
 		return todoList;
+	}
+
+	private static string[] ParseCsvLine(string line, char separator = ';')
+	{
+		var parts = new List<string>();
+		int start = 0;
+		bool inQuotes = false;
+		for (int i = 0; i < line.Length; i++)
+		{
+			if (line[i] == '"')
+			{
+				inQuotes = !inQuotes;
+			}
+			else if (line[i] == separator && !inQuotes)
+			{
+				string part = line.Substring(start, i - start);
+				if (part.StartsWith("\"") && part.EndsWith("\""))
+				{
+					part = part.Substring(1, part.Length - 2);
+				}
+				parts.Add(part);
+				start = i + 1;
+			}
+		}
+		if (start < line.Length)
+		{
+			string part = line.Substring(start);
+			if (part.StartsWith("\"") && part.EndsWith("\""))
+			{
+				part = part.Substring(1, part.Length - 2);
+			}
+			parts.Add(part);
+		}
+		return parts.ToArray();
 	}
 }

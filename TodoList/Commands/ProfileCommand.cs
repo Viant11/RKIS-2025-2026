@@ -1,19 +1,19 @@
 ﻿public class ProfileCommand : ICommand
 {
-    public Profile? UserProfile { get; set; }
+	public Profile? UserProfile { get; set; }
 
-    public void Execute()
-    {
-        if (UserProfile == null)
-        {
-            Console.WriteLine("Профиль пользователя не создан.");
-            return;
-        }
+	public void Execute()
+	{
+		if (UserProfile == null)
+		{
+			Console.WriteLine("Профиль пользователя не создан.");
+			return;
+		}
 
-        string profile = @$"
+		string profile = @$"
 Данные пользователя:
 {UserProfile.GetInfo()}";
 
-        Console.WriteLine(profile);
-    }
+		Console.WriteLine(profile);
+	}
 }
