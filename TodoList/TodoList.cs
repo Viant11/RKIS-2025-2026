@@ -75,11 +75,11 @@ public class TodoList : IEnumerable<TodoItem>
 		Console.WriteLine(new string('=', 40));
 	}
 
-	public void Done(int index)
+	public void SetStatus(int index, TodoStatus status)
 	{
 		if (index < 0 || index >= tasks.Count)
 			throw new ArgumentOutOfRangeException(nameof(index));
-		tasks[index].UpdateStatus(TodoStatus.Completed);
+		tasks[index].UpdateStatus(status);
 	}
 
 	public void UpdateText(int index, string newText)

@@ -24,7 +24,7 @@ public class DoneCommand : ICommand
 
 			if (int.TryParse(Argument, out int index) && index > 0 && index <= TodoList.Count)
 			{
-				TodoList.Done(index - 1);
+				TodoList.SetStatus(index - 1, TodoStatus.Completed);
 				Console.WriteLine($"Задача {index} отмечена как выполненная");
 			}
 			else
