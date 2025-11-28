@@ -53,6 +53,9 @@ internal class Program
 					if (command is AddCommand || command is DeleteCommand ||
 						command is UpdateCommand || command is StatusCommand)
 					{
+						AppInfo.UndoStack.Push(command);
+						AppInfo.RedoStack.Clear();
+
 						FileManager.SaveTodos(AppInfo.Todos, TodoFilePath);
 					}
 				}

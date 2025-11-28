@@ -39,6 +39,10 @@ static class CommandParser
 				return new DeleteCommand { Argument = commandData.Argument };
 			case "update":
 				return new UpdateCommand { Argument = commandData.Argument };
+			case "undo":
+				return new UndoCommand();
+			case "redo":
+				return new RedoCommand();
 			case "exit":
 				return new ExitCommand();
 			default:
