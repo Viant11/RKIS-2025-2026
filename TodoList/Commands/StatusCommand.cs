@@ -2,14 +2,13 @@
 
 public class StatusCommand : ICommand
 {
-	public TodoList? TodoList { get; set; }
 	public string? Argument { get; set; }
 
 	public void Execute()
 	{
 		try
 		{
-			if (TodoList == null)
+			if (AppInfo.Todos == null)
 			{
 				Console.WriteLine("Ошибка: TodoList не инициализирован");
 				return;
@@ -28,7 +27,7 @@ public class StatusCommand : ICommand
 				return;
 			}
 
-			if (!int.TryParse(parts[0], out int index) || index <= 0 || index > TodoList.Count)
+			if (!int.TryParse(parts[0], out int index) || index <= 0 || index > AppInfo.Todos.Count)
 			{
 				Console.WriteLine("Ошибка: Неверный индекс задачи.");
 				return;
@@ -40,7 +39,7 @@ public class StatusCommand : ICommand
 				return;
 			}
 
-			TodoList.SetStatus(index - 1, newStatus);
+			AppInfo.Todos.SetStatus(index - 1, newStatus);
 			Console.WriteLine($"Задаче {index} установлен статус: {newStatus}");
 		}
 		catch (Exception ex)

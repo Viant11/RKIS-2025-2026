@@ -1,13 +1,14 @@
-﻿public class ReadCommand : ICommand
+﻿using System;
+
+public class ReadCommand : ICommand
 {
-	public TodoList? TodoList { get; set; }
 	public string? Argument { get; set; }
 
 	public void Execute()
 	{
 		try
 		{
-			if (TodoList == null)
+			if (AppInfo.Todos == null)
 			{
 				Console.WriteLine("Ошибка: TodoList не инициализирован");
 				return;
@@ -19,13 +20,13 @@
 				return;
 			}
 
-			if (!int.TryParse(Argument, out int index) || index <= 0 || index > TodoList.Count)
+			if (!int.TryParse(Argument, out int index) || index <= 0 || index > AppInfo.Todos.Count)
 			{
 				Console.WriteLine("Ошибка: Неверный индекс задачи. Пример: read 1");
 				return;
 			}
 
-			TodoList.Read(index - 1);
+			AppInfo.Todos.Read(index - 1);
 		}
 		catch (Exception ex)
 		{

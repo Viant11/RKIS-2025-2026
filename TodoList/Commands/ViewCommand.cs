@@ -1,6 +1,7 @@
-﻿public class ViewCommand : ICommand
+﻿using System;
+
+public class ViewCommand : ICommand
 {
-	public TodoList? TodoList { get; set; }
 	public bool ShowIndexFlag { get; set; }
 	public bool ShowStatusFlag { get; set; }
 	public bool ShowDateFlag { get; set; }
@@ -10,13 +11,13 @@
 
 	public void Execute()
 	{
-		if (TodoList == null)
+		if (AppInfo.Todos == null)
 		{
 			Console.WriteLine("Ошибка: TodoList не инициализирован");
 			return;
 		}
 
-		if (TodoList.Count == 0)
+		if (AppInfo.Todos.Count == 0)
 		{
 			Console.WriteLine("Список задач пуст.");
 			return;
@@ -37,12 +38,12 @@
 
 		if (showOnlyText)
 		{
-			for (int i = 0; i < TodoList.Count; i++)
+			for (int i = 0; i < AppInfo.Todos.Count; i++)
 			{
-				if (IncompleteFlag && TodoList[i].Status == TodoStatus.Completed)
+				if (IncompleteFlag && AppInfo.Todos[i].Status == TodoStatus.Completed)
 					continue;
 
-				string shortInfo = TodoList[i].GetShortInfo();
+				string shortInfo = AppInfo.Todos[i].GetShortInfo();
 				string[] parts = shortInfo.Split(new[] { " | " }, StringSplitOptions.None);
 				Console.WriteLine(parts.Length > 0 ? parts[0].Trim() : shortInfo);
 			}
@@ -50,13 +51,13 @@
 		else
 		{
 			bool showDone = !IncompleteFlag;
-			TodoList.View(showIndex, showDone, showDate, showStatus);
+			AppInfo.Todos.View(showIndex, showDone, showDate, showStatus);
 		}
 
 		if (StatisticsFlag)
 		{
-			int completedCount = TodoList.GetCompletedCount();
-			int totalCount = TodoList.Count;
+			int completedCount = AppInfo.Todos.GetCompletedCount();
+			int totalCount = AppInfo.Todos.Count;
 			int displayedCount = IncompleteFlag ? totalCount - completedCount : totalCount;
 
 			Console.WriteLine("\n=== Статистика ===");

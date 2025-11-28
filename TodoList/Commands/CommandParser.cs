@@ -1,7 +1,8 @@
 ﻿using System;
+
 static class CommandParser
 {
-	public static ICommand Parse(string inputString, TodoList? todoList, Profile? profile)
+	public static ICommand Parse(string inputString)
 	{
 		if (string.IsNullOrWhiteSpace(inputString))
 			return new UnknownCommand();
@@ -13,18 +14,16 @@ static class CommandParser
 			case "help":
 				return new HelpCommand();
 			case "profile":
-				return new ProfileCommand { UserProfile = profile };
+				return new ProfileCommand();
 			case "add":
 				return new AddCommand
 				{
-					TodoList = todoList,
 					TaskDescription = commandData.Argument,
 					MultilineFlag = commandData.MultilineFlag
 				};
 			case "view":
 				return new ViewCommand
 				{
-					TodoList = todoList,
 					ShowIndexFlag = commandData.ShowIndexFlag,
 					ShowStatusFlag = commandData.ShowStatusFlag,
 					ShowDateFlag = commandData.ShowDateFlag,
@@ -33,15 +32,15 @@ static class CommandParser
 					StatisticsFlag = commandData.StatisticsFlag
 				};
 			case "read":
-				return new ReadCommand { TodoList = todoList, Argument = commandData.Argument };
+				return new ReadCommand { Argument = commandData.Argument };
 			case "status":
-				return new StatusCommand { TodoList = todoList, Argument = commandData.Argument };
+				return new StatusCommand { Argument = commandData.Argument };
 			case "delete":
-				return new DeleteCommand { TodoList = todoList, Argument = commandData.Argument };
+				return new DeleteCommand { Argument = commandData.Argument };
 			case "update":
-				return new UpdateCommand { TodoList = todoList, Argument = commandData.Argument };
+				return new UpdateCommand { Argument = commandData.Argument };
 			case "exit":
-				return new ExitCommand { TodoList = todoList, UserProfile = profile };
+				return new ExitCommand();
 			default:
 				return new UnknownCommand();
 		}

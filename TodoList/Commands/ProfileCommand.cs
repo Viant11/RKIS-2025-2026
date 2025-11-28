@@ -1,10 +1,10 @@
-﻿public class ProfileCommand : ICommand
-{
-	public Profile? UserProfile { get; set; }
+﻿using System;
 
+public class ProfileCommand : ICommand
+{
 	public void Execute()
 	{
-		if (UserProfile == null)
+		if (AppInfo.CurrentProfile == null)
 		{
 			Console.WriteLine("Профиль пользователя не создан.");
 			return;
@@ -12,7 +12,7 @@
 
 		string profile = @$"
 Данные пользователя:
-{UserProfile.GetInfo()}";
+{AppInfo.CurrentProfile.GetInfo()}";
 
 		Console.WriteLine(profile);
 	}

@@ -3,14 +3,13 @@ using System.IO;
 
 public class UpdateCommand : ICommand
 {
-	public TodoList? TodoList { get; set; }
 	public string? Argument { get; set; }
 
 	public void Execute()
 	{
 		try
 		{
-			if (TodoList == null)
+			if (AppInfo.Todos == null)
 			{
 				Console.WriteLine("Ошибка: TodoList не инициализирован");
 				return;
@@ -32,7 +31,7 @@ public class UpdateCommand : ICommand
 			string indexStr = Argument.Substring(0, firstSpaceIndex);
 			string newText = Argument.Substring(firstSpaceIndex + 1).Trim();
 
-			if (!int.TryParse(indexStr, out int index) || index <= 0 || index > TodoList.Count)
+			if (!int.TryParse(indexStr, out int index) || index <= 0 || index > AppInfo.Todos.Count)
 			{
 				Console.WriteLine("Ошибка: Неверный индекс задачи. Пример: update 1 \"Новый текст\"");
 				return;
@@ -49,10 +48,8 @@ public class UpdateCommand : ICommand
 				return;
 			}
 
-			TodoList.UpdateText(index - 1, newText);
+			AppInfo.Todos.UpdateText(index - 1, newText);
 			Console.WriteLine($"Задача {index} обновлена");
-
-			FileManager.SaveTodos(TodoList, Program.TodoFilePath);
 		}
 		catch (Exception ex)
 		{

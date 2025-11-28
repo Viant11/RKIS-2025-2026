@@ -2,16 +2,13 @@
 
 public class ExitCommand : ICommand
 {
-	public TodoList? TodoList { get; set; }
-	public Profile? UserProfile { get; set; }
-
 	public void Execute()
 	{
 		Console.WriteLine("Сохранение данных перед выходом...");
-		if (TodoList != null && UserProfile != null)
+		if (AppInfo.Todos != null && AppInfo.CurrentProfile != null)
 		{
-			FileManager.SaveTodos(TodoList, Program.TodoFilePath);
-			FileManager.SaveProfile(UserProfile, Program.ProfileFilePath);
+			FileManager.SaveTodos(AppInfo.Todos, Program.TodoFilePath);
+			FileManager.SaveProfile(AppInfo.CurrentProfile, Program.ProfileFilePath);
 			Console.WriteLine("Данные успешно сохранены.");
 		}
 		else

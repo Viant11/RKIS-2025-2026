@@ -3,14 +3,13 @@ using System.IO;
 
 public class DeleteCommand : ICommand
 {
-	public TodoList? TodoList { get; set; }
 	public string? Argument { get; set; }
 
 	public void Execute()
 	{
 		try
 		{
-			if (TodoList == null)
+			if (AppInfo.Todos == null)
 			{
 				Console.WriteLine("Ошибка: TodoList не инициализирован");
 				return;
@@ -22,12 +21,10 @@ public class DeleteCommand : ICommand
 				return;
 			}
 
-			if (int.TryParse(Argument, out int index) && index > 0 && index <= TodoList.Count)
+			if (int.TryParse(Argument, out int index) && index > 0 && index <= AppInfo.Todos.Count)
 			{
-				TodoList.Delete(index - 1);
+				AppInfo.Todos.Delete(index - 1);
 				Console.WriteLine($"Задача {index} удалена");
-
-				FileManager.SaveTodos(TodoList, Program.TodoFilePath);
 			}
 			else
 			{

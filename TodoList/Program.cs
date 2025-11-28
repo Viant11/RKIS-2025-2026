@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
 using System.Text;
 
 internal class Program
@@ -23,8 +24,12 @@ internal class Program
 		TodoFilePath = Path.Combine(dataDir, "todo.csv");
 
 		FileManager.EnsureDataDirectory(dataDir);
-		Profile userProfile = FileManager.LoadProfile(ProfileFilePath) ?? CreateUserProfile(ProfileFilePath);
-		TodoList todos = FileManager.LoadTodos(TodoFilePath);
+
+		AppInfo.Todos = FileManager.LoadTodos(TodoFilePath);
+		AppInfo.CurrentProfile = FileManager.LoadProfile(ProfileFilePath) ?? CreateUserProfile(ProfileFilePath);
+		AppInfo.UndoStack = new Stack<ICommand>();
+		AppInfo.RedoStack = new Stack<ICommand>();
+
 		bool isRunning = true;
 
 		Console.WriteLine("Введите команду help для просмотра всех команд.");
@@ -35,14 +40,12 @@ internal class Program
 			string userCommand = Console.ReadLine();
 			if (userCommand?.ToLower() == "exit")
 			{
-				FileManager.SaveProfile(userProfile, ProfileFilePath);
-				FileManager.SaveTodos(todos, TodoFilePath);
-				isRunning = false;
+				new ExitCommand().Execute();
 				continue;
 			}
 			try
 			{
-				ICommand command = CommandParser.Parse(userCommand, todos, userProfile);
+				ICommand command = CommandParser.Parse(userCommand);
 				if (command != null)
 				{
 					command.Execute();
@@ -50,7 +53,7 @@ internal class Program
 					if (command is AddCommand || command is DeleteCommand ||
 						command is UpdateCommand || command is StatusCommand)
 					{
-						FileManager.SaveTodos(todos, TodoFilePath);
+						FileManager.SaveTodos(AppInfo.Todos, TodoFilePath);
 					}
 				}
 			}
