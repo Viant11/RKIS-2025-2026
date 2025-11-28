@@ -3,6 +3,8 @@
 public class StatusCommand : ICommand
 {
 	public string? Argument { get; set; }
+	private TodoStatus _oldStatus;
+	private int _taskIndex;
 
 	public void Execute()
 	{
@@ -39,12 +41,20 @@ public class StatusCommand : ICommand
 				return;
 			}
 
-			AppInfo.Todos.SetStatus(index - 1, newStatus);
+			_taskIndex = index - 1;
+			_oldStatus = AppInfo.Todos[_taskIndex].Status;
+			AppInfo.Todos.SetStatus(_taskIndex, newStatus);
 			Console.WriteLine($"Задаче {index} установлен статус: {newStatus}");
 		}
 		catch (Exception ex)
 		{
 			Console.WriteLine($"Ошибка при изменении статуса: {ex.Message}");
 		}
+	}
+
+	public void Unexecute()
+	{
+		AppInfo.Todos.SetStatus(_taskIndex, _oldStatus);
+		Console.WriteLine("Действие 'status' отменено.");
 	}
 }

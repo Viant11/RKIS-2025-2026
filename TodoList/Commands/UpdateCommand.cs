@@ -4,6 +4,8 @@ using System.IO;
 public class UpdateCommand : ICommand
 {
 	public string? Argument { get; set; }
+	private string _oldText;
+	private int _taskIndex;
 
 	public void Execute()
 	{
@@ -48,12 +50,20 @@ public class UpdateCommand : ICommand
 				return;
 			}
 
-			AppInfo.Todos.UpdateText(index - 1, newText);
+			_taskIndex = index - 1;
+			_oldText = AppInfo.Todos[_taskIndex].Text;
+			AppInfo.Todos.UpdateText(_taskIndex, newText);
 			Console.WriteLine($"Задача {index} обновлена");
 		}
 		catch (Exception ex)
 		{
 			Console.WriteLine($"Ошибка при обновлении задачи: {ex.Message}");
 		}
+	}
+
+	public void Unexecute()
+	{
+		AppInfo.Todos.UpdateText(_taskIndex, _oldText);
+		Console.WriteLine("Действие 'update' отменено.");
 	}
 }

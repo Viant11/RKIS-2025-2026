@@ -41,6 +41,15 @@ public class AddCommand : ICommand
 		Console.WriteLine("Задача добавлена!");
 	}
 
+	public void Unexecute()
+	{
+		if (AppInfo.Todos != null && AppInfo.Todos.Count > 0)
+		{
+			AppInfo.Todos.Delete(AppInfo.Todos.Count - 1);
+			Console.WriteLine("Действие 'add' отменено.");
+		}
+	}
+
 	private string ReadMultilineInput()
 	{
 		Console.WriteLine("Многострочный режим. Вводите текст задачи построчно. Для завершения введите !end");

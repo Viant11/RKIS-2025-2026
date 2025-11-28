@@ -16,4 +16,6 @@ public class ProfileCommand : ICommand
 
 		Console.WriteLine(profile);
 	}
+
+	public void Unexecute() { }
 }

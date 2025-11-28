@@ -35,6 +35,14 @@ public class TodoList : IEnumerable<TodoItem>
 		tasks.RemoveAt(index);
 	}
 
+
+	public void Insert(int index, TodoItem item)
+	{
+		if (index < 0 || index > tasks.Count)
+			throw new ArgumentOutOfRangeException(nameof(index), "Индекс для вставки вне допустимого диапазона.");
+		tasks.Insert(index, item);
+	}
+
 	public void View(bool showIndex, bool showDone, bool showDate, bool showStatus = true)
 	{
 		if (tasks.Count == 0)

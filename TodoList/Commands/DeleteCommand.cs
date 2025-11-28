@@ -4,6 +4,8 @@ using System.IO;
 public class DeleteCommand : ICommand
 {
 	public string? Argument { get; set; }
+	private TodoItem _deletedItem;
+	private int _deletedItemIndex;
 
 	public void Execute()
 	{
@@ -23,7 +25,9 @@ public class DeleteCommand : ICommand
 
 			if (int.TryParse(Argument, out int index) && index > 0 && index <= AppInfo.Todos.Count)
 			{
-				AppInfo.Todos.Delete(index - 1);
+				_deletedItemIndex = index - 1;
+				_deletedItem = AppInfo.Todos[_deletedItemIndex];
+				AppInfo.Todos.Delete(_deletedItemIndex);
 				Console.WriteLine($"Задача {index} удалена");
 			}
 			else
@@ -34,6 +38,15 @@ public class DeleteCommand : ICommand
 		catch (Exception ex)
 		{
 			Console.WriteLine($"Ошибка при удалении задачи: {ex.Message}");
+		}
+	}
+
+	public void Unexecute()
+	{
+		if (_deletedItem != null)
+		{
+			AppInfo.Todos.Insert(_deletedItemIndex, _deletedItem);
+			Console.WriteLine("Действие 'delete' отменено.");
 		}
 	}
 }

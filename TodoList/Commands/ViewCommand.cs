@@ -73,4 +73,6 @@ public class ViewCommand : ICommand
 			}
 		}
 	}
+
+	public void Unexecute() { }
 }

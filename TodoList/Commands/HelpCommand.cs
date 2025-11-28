@@ -30,4 +30,6 @@ exit - сохраняет данные и завершает программу
 
 		Console.WriteLine(helpText);
 	}
+
+	public void Unexecute() { }
 }

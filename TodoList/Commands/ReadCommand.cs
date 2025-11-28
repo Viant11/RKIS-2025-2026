@@ -33,4 +33,6 @@ public class ReadCommand : ICommand
 			Console.WriteLine($"Ошибка при чтении задачи: {ex.Message}");
 		}
 	}
+
+	public void Unexecute() { }
 }
