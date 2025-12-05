@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 public static class FileManager
@@ -14,49 +15,56 @@ public static class FileManager
 		}
 	}
 
-	public static void SaveProfile(Profile profile, string filePath)
+	public static void SaveProfiles(List<Profile> profiles, string filePath)
 	{
 		try
 		{
-			string profileData = $"{profile.FirstName}|{profile.LastName}|{profile.BirthYear}";
-			File.WriteAllText(filePath, profileData, Encoding.UTF8);
-			Console.WriteLine("Профиль сохранен");
+			var lines = profiles.Select(p =>
+				$"{p.Id};{p.Login};{p.Password};{p.FirstName};{p.LastName};{p.BirthYear}");
+
+			File.WriteAllLines(filePath, lines, Encoding.UTF8);
 		}
 		catch (Exception ex)
 		{
-			Console.WriteLine($"Ошибка сохранения профиля: {ex.Message}");
+			Console.WriteLine($"Ошибка сохранения профилей: {ex.Message}");
 		}
 	}
 
-	public static Profile LoadProfile(string filePath)
+	public static List<Profile> LoadProfiles(string filePath)
 	{
+		var profiles = new List<Profile>();
+		if (!File.Exists(filePath))
+		{
+			return profiles;
+		}
+
 		try
 		{
-			if (!File.Exists(filePath))
+			string[] lines = File.ReadAllLines(filePath, Encoding.UTF8);
+			foreach (var line in lines)
 			{
-				Console.WriteLine("Файл профиля не найден");
-				return null;
-			}
-			string line = File.ReadAllText(filePath, Encoding.UTF8);
-			if (!string.IsNullOrEmpty(line))
-			{
-				string[] parts = line.Split('|');
-				if (parts.Length == 3)
+				if (string.IsNullOrWhiteSpace(line)) continue;
+
+				string[] parts = line.Split(';');
+				if (parts.Length == 6)
 				{
-					string firstName = parts[0];
-					string lastName = parts[1];
-					if (int.TryParse(parts[2], out int birthYear))
-					{
-						return new Profile(firstName, lastName, birthYear);
-					}
+					var profile = new Profile(
+						firstName: parts[3],
+						lastName: parts[4],
+						birthYear: int.Parse(parts[5]),
+						login: parts[1],
+						password: parts[2],
+						id: Guid.Parse(parts[0])
+					);
+					profiles.Add(profile);
 				}
 			}
 		}
 		catch (Exception ex)
 		{
-			Console.WriteLine($"Ошибка загрузки профиля: {ex.Message}");
+			Console.WriteLine($"Ошибка загрузки профилей: {ex.Message}");
 		}
-		return null;
+		return profiles;
 	}
 
 	public static void SaveTodos(TodoList todos, string filePath)
@@ -81,42 +89,28 @@ public static class FileManager
 	public static TodoList LoadTodos(string filePath)
 	{
 		var todoList = new TodoList();
+		if (!File.Exists(filePath))
+		{
+			return todoList;
+		}
+
 		try
 		{
-			if (!File.Exists(filePath))
-			{
-				Console.WriteLine("Файл задач не найден");
-				return todoList;
-			}
-
 			string[] lines = File.ReadAllLines(filePath, Encoding.UTF8);
-
-			for (int i = 0; i < lines.Length; i++)
+			foreach (var line in lines)
 			{
-				string line = lines[i];
-				if (!string.IsNullOrEmpty(line))
+				if (string.IsNullOrWhiteSpace(line)) continue;
+
+				string[] parts = ParseCsvLine(line, ';');
+				if (parts.Length == 4)
 				{
-					string[] parts = ParseCsvLine(line, ';');
-					if (parts.Length == 4)
-					{
-						string text = parts[1].Replace("\"\"", "\"").Replace("\\n", "\n").Replace("\r", "\r");
+					string text = parts[1].Replace("\"\"", "\"").Replace("\\n", "\n").Replace("\r", "\r");
 
-						if (!Enum.TryParse<TodoStatus>(parts[2], true, out var status))
-						{
-							if (bool.TryParse(parts[2], out bool isDone))
-							{
-								status = isDone ? TodoStatus.Completed : TodoStatus.NotStarted;
-							}
-							else
-							{
-								status = TodoStatus.NotStarted;
-							}
-						}
+					Enum.TryParse<TodoStatus>(parts[2], true, out var status);
+					DateTime lastUpdate = DateTime.Parse(parts[3]);
 
-						DateTime lastUpdate = DateTime.Parse(parts[3]);
-						var todoItem = new TodoItem(text, status, lastUpdate);
-						todoList.Add(todoItem);
-					}
+					var todoItem = new TodoItem(text, status, lastUpdate);
+					todoList.Add(todoItem);
 				}
 			}
 		}
@@ -130,34 +124,26 @@ public static class FileManager
 	private static string[] ParseCsvLine(string line, char separator = ';')
 	{
 		var parts = new List<string>();
-		int start = 0;
+		var currentPart = new StringBuilder();
 		bool inQuotes = false;
-		for (int i = 0; i < line.Length; i++)
+
+		foreach (char c in line)
 		{
-			if (line[i] == '"')
+			if (c == '"')
 			{
 				inQuotes = !inQuotes;
 			}
-			else if (line[i] == separator && !inQuotes)
+			else if (c == separator && !inQuotes)
 			{
-				string part = line.Substring(start, i - start);
-				if (part.StartsWith("\"") && part.EndsWith("\""))
-				{
-					part = part.Substring(1, part.Length - 2);
-				}
-				parts.Add(part);
-				start = i + 1;
+				parts.Add(currentPart.ToString());
+				currentPart.Clear();
+			}
+			else
+			{
+				currentPart.Append(c);
 			}
 		}
-		if (start < line.Length)
-		{
-			string part = line.Substring(start);
-			if (part.StartsWith("\"") && part.EndsWith("\""))
-			{
-				part = part.Substring(1, part.Length - 2);
-			}
-			parts.Add(part);
-		}
+		parts.Add(currentPart.ToString());
 		return parts.ToArray();
 	}
 }
