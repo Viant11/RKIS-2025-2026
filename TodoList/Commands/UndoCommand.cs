@@ -1,4 +1,4 @@
-using System;
+п»їusing System;
 
 public class UndoCommand : ICommand
 {
@@ -13,7 +13,7 @@ public class UndoCommand : ICommand
 		}
 		else
 		{
-			Console.WriteLine("Нечего отменять.");
+			Console.WriteLine("РќРµС‡РµРіРѕ РѕС‚РјРµРЅСЏС‚СЊ.");
 		}
 	}
 
