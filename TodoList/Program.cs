@@ -6,8 +6,8 @@ using System.Text;
 
 internal class Program
 {
+	public static string DataDir { get; private set; }
 	public static string ProfileFilePath { get; private set; }
-	public static string TodoFilePath { get; private set; }
 
 	private static void Main(string[] args)
 	{
@@ -18,113 +18,125 @@ internal class Program
 		}
 
 		Console.WriteLine("Работу выполнили: Соловьёв Евгений и Тареев Юрий");
-		string dataDir = "data";
+		DataDir = "data";
+		ProfileFilePath = Path.Combine(DataDir, "profile.csv");
 
-		ProfileFilePath = Path.Combine(dataDir, "profile.txt");
-		TodoFilePath = Path.Combine(dataDir, "todo.csv");
+		FileManager.EnsureDataDirectory(DataDir);
 
-		FileManager.EnsureDataDirectory(dataDir);
-
-		AppInfo.Todos = FileManager.LoadTodos(TodoFilePath);
-		AppInfo.CurrentProfile = FileManager.LoadProfile(ProfileFilePath) ?? CreateUserProfile(ProfileFilePath);
+		AppInfo.AllProfiles = FileManager.LoadProfiles(ProfileFilePath);
 		AppInfo.UndoStack = new Stack<ICommand>();
 		AppInfo.RedoStack = new Stack<ICommand>();
 
-		bool isRunning = true;
 
-		Console.WriteLine("Введите команду help для просмотра всех команд.");
-
-		while (isRunning)
+		while (true)
 		{
-			Console.Write("> ");
-			string userCommand = Console.ReadLine();
-			if (userCommand?.ToLower() == "exit")
-			{
-				new ExitCommand().Execute();
-				continue;
-			}
-			try
-			{
-				ICommand command = CommandParser.Parse(userCommand);
-				if (command != null)
-				{
-					command.Execute();
+			HandleUserLogin();
 
-					if (command is AddCommand || command is DeleteCommand ||
-						command is UpdateCommand || command is StatusCommand)
-					{
-						AppInfo.UndoStack.Push(command);
-						AppInfo.RedoStack.Clear();
-
-						FileManager.SaveTodos(AppInfo.Todos, TodoFilePath);
-					}
-				}
-			}
-			catch (Exception ex)
+			if (AppInfo.CurrentProfileId.HasValue)
 			{
-				Console.WriteLine($"Ошибка: {ex.Message}");
+				RunUserSession();
+			}
+			else
+			{
+				break;
 			}
 		}
 	}
 
-	private static Profile CreateUserProfile(string profileFilePath)
+	private static void HandleUserLogin()
 	{
-		string name, surname;
-		int yearOfBirth;
-		string fullName;
+		Console.WriteLine("Войти в существующий профиль? [y/n] (или 'exit' для выхода)");
+		string choice = Console.ReadLine()?.ToLower();
 
-		while (true)
+		if (choice == "y")
 		{
-			Console.WriteLine("Напишите ваше имя и фамилию:");
-			fullName = Console.ReadLine();
+			LoginUser();
+		}
+		else if (choice == "n")
+		{
+			CreateNewProfile();
+		}
+		else if (choice == "exit")
+		{
+			AppInfo.CurrentProfileId = null;
+		}
+		else
+		{
+			Console.WriteLine("Неверный ввод. Попробуйте еще раз.");
+			HandleUserLogin();
+		}
+	}
 
-			if (string.IsNullOrWhiteSpace(fullName))
-			{
-				Console.WriteLine("Ошибка: Имя и фамилия не могут быть пустыми.");
-				continue;
-			}
+	private static void LoginUser()
+	{
+		Console.Write("Введите логин: ");
+		string login = Console.ReadLine();
+		Console.Write("Введите пароль: ");
+		string password = Console.ReadLine();
 
-			if (fullName.Any(char.IsDigit))
-			{
-				Console.WriteLine("Ошибка: Имя и фамилия не могут содержать цифры.");
-				continue;
-			}
+		Profile foundProfile = AppInfo.AllProfiles.FirstOrDefault(p => p.Login == login && p.Password == password);
 
-			break;
+		if (foundProfile != null)
+		{
+			AppInfo.CurrentProfileId = foundProfile.Id;
+			AppInfo.Todos = FileManager.LoadUserTodos(foundProfile.Id, DataDir);
+			Console.WriteLine($"Добро пожаловать, {foundProfile.FirstName}!");
+		}
+		else
+		{
+			Console.WriteLine("Неверный логин или пароль.");
+			AppInfo.CurrentProfileId = null;
+			HandleUserLogin();
+		}
+	}
+
+	private static void CreateNewProfile()
+	{
+		Console.Write("Введите новый логин: ");
+		string login = Console.ReadLine();
+		if (string.IsNullOrWhiteSpace(login) || AppInfo.AllProfiles.Any(p => p.Login.Equals(login, StringComparison.OrdinalIgnoreCase)))
+		{
+			Console.WriteLine("Этот логин уже занят или некорректен.");
+			CreateNewProfile();
+			return;
 		}
 
-		string[] splitFullName = fullName.Trim().Split(new[] { ' ' }, 2, StringSplitOptions.RemoveEmptyEntries);
-		name = splitFullName[0];
-		surname = splitFullName.Length > 1 ? splitFullName[1] : "";
+		Console.Write("Введите пароль: ");
+		string password = Console.ReadLine();
+		Console.Write("Введите ваше имя: ");
+		string firstName = Console.ReadLine();
+		Console.Write("Введите вашу фамилию: ");
+		string lastName = Console.ReadLine();
 
-		int currentYear = DateTime.Now.Year;
+		int birthYear;
 		while (true)
 		{
-			Console.WriteLine("Введите Год Рождения:");
-			if (int.TryParse(Console.ReadLine(), out yearOfBirth))
+			Console.Write("Введите год рождения: ");
+			if (int.TryParse(Console.ReadLine(), out birthYear) && birthYear > 1900 && birthYear <= DateTime.Now.Year)
 			{
-				if (yearOfBirth > currentYear)
-				{
-					Console.WriteLine($"Ошибка: Год рождения не может быть в будущем. Пожалуйста, введите год до {currentYear}.");
-				}
-				else if (yearOfBirth < 1900)
-				{
-					Console.WriteLine("Ошибка: Указан слишком ранний год рождения. Пожалуйста, введите корректный год.");
-				}
-				else
-				{
-					break;
-				}
+				break;
 			}
-			else
-			{
-				Console.WriteLine("Ошибка: Неверный формат года. Введите четыре цифры, например: 2000");
-			}
+			Console.WriteLine("Некорректный год рождения.");
 		}
 
-		Profile profile = new Profile(name, surname, yearOfBirth);
-		Console.WriteLine("Добавлен пользователь: " + profile.GetInfo());
-		FileManager.SaveProfile(profile, profileFilePath);
-		return profile;
+		var newProfile = new Profile(firstName, lastName, birthYear, login, password, Guid.NewGuid());
+		AppInfo.AllProfiles.Add(newProfile);
+		FileManager.SaveProfiles(AppInfo.AllProfiles, ProfileFilePath);
+
+		AppInfo.CurrentProfileId = newProfile.Id;
+		AppInfo.Todos = new TodoList();
+		FileManager.SaveUserTodos(newProfile.Id, AppInfo.Todos, DataDir);
+
+		Console.WriteLine("Новый профиль успешно создан!");
+	}
+
+	private static void RunUserSession()
+	{
+		Console.WriteLine("Сессия пользователя запущена. Введите 'exit' для выхода.");
+		while (true)
+		{
+			string input = Console.ReadLine();
+			if (input == "exit") break;
+		}
 	}
 }

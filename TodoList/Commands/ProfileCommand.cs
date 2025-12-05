@@ -1,18 +1,27 @@
 ﻿using System;
+using System.Linq;
 
 public class ProfileCommand : ICommand
 {
 	public void Execute()
 	{
-		if (AppInfo.CurrentProfile == null)
+		if (!AppInfo.CurrentProfileId.HasValue)
 		{
-			Console.WriteLine("Профиль пользователя не создан.");
+			Console.WriteLine("Вы не вошли ни в один профиль.");
+			return;
+		}
+
+		Profile currentUser = AppInfo.AllProfiles.FirstOrDefault(p => p.Id == AppInfo.CurrentProfileId.Value);
+
+		if (currentUser == null)
+		{
+			Console.WriteLine("Ошибка: не удалось найти данные текущего профиля.");
 			return;
 		}
 
 		string profile = @$"
 Данные пользователя:
-{AppInfo.CurrentProfile.GetInfo()}";
+{currentUser.GetInfo()}";
 
 		Console.WriteLine(profile);
 	}

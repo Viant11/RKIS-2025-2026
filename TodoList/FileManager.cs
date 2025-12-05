@@ -67,8 +67,9 @@ public static class FileManager
 		return profiles;
 	}
 
-	public static void SaveTodos(TodoList todos, string filePath)
+	public static void SaveUserTodos(Guid userId, TodoList todos, string dataDir)
 	{
+		string filePath = Path.Combine(dataDir, $"todos_{userId}.csv");
 		try
 		{
 			var lines = new List<string>();
@@ -82,12 +83,13 @@ public static class FileManager
 		}
 		catch (Exception ex)
 		{
-			Console.WriteLine($"Ошибка сохранения задач: {ex.Message}");
+			Console.WriteLine($"Ошибка сохранения задач для пользователя {userId}: {ex.Message}");
 		}
 	}
 
-	public static TodoList LoadTodos(string filePath)
+	public static TodoList LoadUserTodos(Guid userId, string dataDir)
 	{
+		string filePath = Path.Combine(dataDir, $"todos_{userId}.csv");
 		var todoList = new TodoList();
 		if (!File.Exists(filePath))
 		{
@@ -105,10 +107,8 @@ public static class FileManager
 				if (parts.Length == 4)
 				{
 					string text = parts[1].Replace("\"\"", "\"").Replace("\\n", "\n").Replace("\r", "\r");
-
 					Enum.TryParse<TodoStatus>(parts[2], true, out var status);
 					DateTime lastUpdate = DateTime.Parse(parts[3]);
-
 					var todoItem = new TodoItem(text, status, lastUpdate);
 					todoList.Add(todoItem);
 				}
@@ -116,7 +116,7 @@ public static class FileManager
 		}
 		catch (Exception ex)
 		{
-			Console.WriteLine($"Ошибка загрузки задач: {ex.Message}");
+			Console.WriteLine($"Ошибка загрузки задач для пользователя {userId}: {ex.Message}");
 		}
 		return todoList;
 	}
@@ -126,12 +126,20 @@ public static class FileManager
 		var parts = new List<string>();
 		var currentPart = new StringBuilder();
 		bool inQuotes = false;
-
-		foreach (char c in line)
+		for (int i = 0; i < line.Length; i++)
 		{
+			char c = line[i];
 			if (c == '"')
 			{
-				inQuotes = !inQuotes;
+				if (i + 1 < line.Length && line[i + 1] == '"')
+				{
+					currentPart.Append('"');
+					i++;
+				}
+				else
+				{
+					inQuotes = !inQuotes;
+				}
 			}
 			else if (c == separator && !inQuotes)
 			{

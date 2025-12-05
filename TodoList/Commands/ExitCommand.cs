@@ -5,15 +5,14 @@ public class ExitCommand : ICommand
 	public void Execute()
 	{
 		Console.WriteLine("Сохранение данных перед выходом...");
-		if (AppInfo.Todos != null && AppInfo.CurrentProfile != null)
+		if (AppInfo.CurrentProfileId.HasValue && AppInfo.Todos != null)
 		{
-			FileManager.SaveTodos(AppInfo.Todos, Program.TodoFilePath);
-			FileManager.SaveProfile(AppInfo.CurrentProfile, Program.ProfileFilePath);
-			Console.WriteLine("Данные успешно сохранены.");
+			FileManager.SaveUserTodos(AppInfo.CurrentProfileId.Value, AppInfo.Todos, Program.DataDir);
 		}
-		else
+
+		if (AppInfo.AllProfiles != null)
 		{
-			Console.WriteLine("Не удалось сохранить данные: списки не инициализированы.");
+			FileManager.SaveProfiles(AppInfo.AllProfiles, Program.ProfileFilePath);
 		}
 
 		Console.WriteLine("Программа завершена.");
