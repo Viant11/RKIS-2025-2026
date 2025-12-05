@@ -86,6 +86,8 @@ internal class Program
 		{
 			AppInfo.CurrentProfileId = foundProfile.Id;
 			AppInfo.Todos = FileManager.LoadUserTodos(foundProfile.Id, DataDir);
+			AppInfo.UndoStack.Clear();
+			AppInfo.RedoStack.Clear();
 			Console.WriteLine($"Добро пожаловать, {foundProfile.FirstName}!");
 		}
 		else
@@ -129,6 +131,9 @@ internal class Program
 		AppInfo.CurrentProfileId = newProfile.Id;
 		AppInfo.Todos = new TodoList();
 		FileManager.SaveUserTodos(newProfile.Id, AppInfo.Todos, DataDir);
+
+		AppInfo.UndoStack.Clear();
+		AppInfo.RedoStack.Clear();
 
 		Console.WriteLine("Новый профиль успешно создан!");
 	}
