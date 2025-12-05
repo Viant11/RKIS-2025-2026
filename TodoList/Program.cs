@@ -45,25 +45,31 @@ internal class Program
 
 	private static void HandleUserLogin()
 	{
-		Console.WriteLine("Войти в существующий профиль? [y/n] (или 'exit' для выхода)");
-		string choice = Console.ReadLine()?.ToLower();
+		while (AppInfo.CurrentProfileId == null)
+		{
+			Console.WriteLine("\nВойти в существующий профиль? [y/n] (или 'exit' для выхода)");
+			string choice = Console.ReadLine()?.ToLower();
 
-		if (choice == "y")
-		{
-			LoginUser();
+			switch (choice)
+			{
+				case "y":
+					LoginUser();
+					break;
+				case "n":
+					CreateNewProfile();
+					break;
+				case "exit":
+					AppInfo.CurrentProfileId = Guid.Empty;
+					break;
+				default:
+					Console.WriteLine("Неверный ввод. Попробуйте еще раз.");
+					break;
+			}
 		}
-		else if (choice == "n")
-		{
-			CreateNewProfile();
-		}
-		else if (choice == "exit")
+
+		if (AppInfo.CurrentProfileId == Guid.Empty)
 		{
 			AppInfo.CurrentProfileId = null;
-		}
-		else
-		{
-			Console.WriteLine("Неверный ввод. Попробуйте еще раз.");
-			HandleUserLogin();
 		}
 	}
 
@@ -85,8 +91,6 @@ internal class Program
 		else
 		{
 			Console.WriteLine("Неверный логин или пароль.");
-			AppInfo.CurrentProfileId = null;
-			HandleUserLogin();
 		}
 	}
 
@@ -97,7 +101,6 @@ internal class Program
 		if (string.IsNullOrWhiteSpace(login) || AppInfo.AllProfiles.Any(p => p.Login.Equals(login, StringComparison.OrdinalIgnoreCase)))
 		{
 			Console.WriteLine("Этот логин уже занят или некорректен.");
-			CreateNewProfile();
 			return;
 		}
 
@@ -132,11 +135,35 @@ internal class Program
 
 	private static void RunUserSession()
 	{
-		Console.WriteLine("Сессия пользователя запущена. Введите 'exit' для выхода.");
-		while (true)
+		Console.WriteLine("Сессия пользователя запущена. Введите 'help' для списка команд.");
+		while (AppInfo.CurrentProfileId.HasValue)
 		{
+			Console.Write("> ");
 			string input = Console.ReadLine();
-			if (input == "exit") break;
+			if (string.IsNullOrWhiteSpace(input)) continue;
+
+			ICommand command = CommandParser.Parse(input);
+
+			if (command is UndoCommand || command is RedoCommand)
+			{
+				command.Execute();
+				continue;
+			}
+
+			command.Execute();
+
+			if (!AppInfo.CurrentProfileId.HasValue)
+			{
+				break;
+			}
+
+			if (command is AddCommand || command is DeleteCommand || command is UpdateCommand || command is StatusCommand)
+			{
+				AppInfo.UndoStack.Push(command);
+				AppInfo.RedoStack.Clear();
+				FileManager.SaveUserTodos(AppInfo.CurrentProfileId.Value, AppInfo.Todos, DataDir);
+			}
 		}
+		Console.WriteLine("Вы вышли из профиля.");
 	}
 }
