@@ -20,6 +20,9 @@ exit - сохраняет данные и завершает программу
 Флаги для add:
 --multiline или -m - многострочный ввод для add
 
+Флаги для profile:
+--out или -o - выйти из текущего профиля
+
 Флаги для view:
 --index или -i - показывать индекс задачи
 --status или -s - показывать статус задачи
@@ -28,7 +31,7 @@ exit - сохраняет данные и завершает программу
 --incomplete или -I - показывать только невыполненные
 --statistics или -S - показывать статистику
 
-Примеры: view -isd, view --all, status 1 InProgress";
+Примеры: view -isd, view --all, status 1 InProgress, profile -o";
 
 		Console.WriteLine(helpText);
 	}

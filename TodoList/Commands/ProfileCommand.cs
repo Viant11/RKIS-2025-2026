@@ -3,8 +3,16 @@ using System.Linq;
 
 public class ProfileCommand : ICommand
 {
+	public bool LogoutFlag { get; set; }
+
 	public void Execute()
 	{
+		if (LogoutFlag)
+		{
+			AppInfo.CurrentProfileId = null;
+			return;
+		}
+
 		if (!AppInfo.CurrentProfileId.HasValue)
 		{
 			Console.WriteLine("Вы не вошли ни в один профиль.");

@@ -9,4 +9,5 @@
 	public bool ShowStatusFlag;
 	public bool ShowDateFlag;
 	public bool ShowAllFlag;
+	public bool LogoutFlag;
 }

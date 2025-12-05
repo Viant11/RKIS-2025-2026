@@ -14,7 +14,7 @@ static class CommandParser
 			case "help":
 				return new HelpCommand();
 			case "profile":
-				return new ProfileCommand();
+				return new ProfileCommand { LogoutFlag = commandData.LogoutFlag };
 			case "add":
 				return new AddCommand
 				{
@@ -77,6 +77,7 @@ static class CommandParser
 					case "all": result.ShowAllFlag = true; break;
 					case "incomplete": result.IncompleteFlag = true; break;
 					case "statistics": result.StatisticsFlag = true; break;
+					case "out": result.LogoutFlag = true; break;
 				}
 			}
 			else if (parts[i].StartsWith("-") && parts[i].Length > 1)
@@ -93,6 +94,7 @@ static class CommandParser
 						case 'a': result.ShowAllFlag = true; break;
 						case 'I': result.IncompleteFlag = true; break;
 						case 'S': result.StatisticsFlag = true; break;
+						case 'o': result.LogoutFlag = true; break;
 					}
 				}
 			}
