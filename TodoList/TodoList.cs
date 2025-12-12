@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-
 public class TodoList : IEnumerable<TodoItem>
 {
+	public event Action<TodoItem> OnTodoAdded;
+	public event Action<TodoItem> OnTodoDeleted;
+	public event Action<TodoItem> OnTodoUpdated;
+	public event Action<TodoItem> OnStatusChanged;
 	private List<TodoItem> tasks;
 
 	public int Count => tasks.Count;
@@ -26,13 +29,17 @@ public class TodoList : IEnumerable<TodoItem>
 	public void Add(TodoItem item)
 	{
 		tasks.Add(item);
+		OnTodoAdded?.Invoke(item);
 	}
 
 	public void Delete(int index)
 	{
 		if (index < 0 || index >= tasks.Count)
 			throw new ArgumentOutOfRangeException(nameof(index));
+
+		var item = tasks[index];
 		tasks.RemoveAt(index);
+		OnTodoDeleted?.Invoke(item);
 	}
 
 
@@ -41,6 +48,7 @@ public class TodoList : IEnumerable<TodoItem>
 		if (index < 0 || index > tasks.Count)
 			throw new ArgumentOutOfRangeException(nameof(index), "Индекс для вставки вне допустимого диапазона.");
 		tasks.Insert(index, item);
+		OnTodoAdded?.Invoke(item);
 	}
 
 	public void View(bool showIndex, bool showDone, bool showDate, bool showStatus = true)
@@ -88,6 +96,7 @@ public class TodoList : IEnumerable<TodoItem>
 		if (index < 0 || index >= tasks.Count)
 			throw new ArgumentOutOfRangeException(nameof(index));
 		tasks[index].UpdateStatus(status);
+		OnStatusChanged?.Invoke(tasks[index]);
 	}
 
 	public void UpdateText(int index, string newText)
@@ -95,6 +104,7 @@ public class TodoList : IEnumerable<TodoItem>
 		if (index < 0 || index >= tasks.Count)
 			throw new ArgumentOutOfRangeException(nameof(index));
 		tasks[index].UpdateText(newText);
+		OnTodoUpdated?.Invoke(tasks[index]);
 	}
 
 	public int GetCompletedCount()
