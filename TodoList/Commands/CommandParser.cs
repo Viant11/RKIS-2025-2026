@@ -1,53 +1,47 @@
 ﻿using System;
+using System.Collections.Generic;
 
 static class CommandParser
 {
+	private static Dictionary<string, Func<string, CommandData, ICommand>> _commandHandlers = new();
+
+	static CommandParser()
+	{
+		_commandHandlers["help"] = (args, data) => new HelpCommand();
+		_commandHandlers["profile"] = (args, data) => new ProfileCommand { LogoutFlag = data.LogoutFlag };
+		_commandHandlers["add"] = (args, data) => new AddCommand { TaskDescription = args, MultilineFlag = data.MultilineFlag };
+		_commandHandlers["view"] = (args, data) => new ViewCommand
+		{
+			ShowIndexFlag = data.ShowIndexFlag,
+			ShowStatusFlag = data.ShowStatusFlag,
+			ShowDateFlag = data.ShowDateFlag,
+			ShowAllFlag = data.ShowAllFlag,
+			IncompleteFlag = data.IncompleteFlag,
+			StatisticsFlag = data.StatisticsFlag
+		};
+		_commandHandlers["read"] = (args, data) => new ReadCommand { Argument = args };
+		_commandHandlers["status"] = (args, data) => new StatusCommand { Argument = args };
+		_commandHandlers["delete"] = (args, data) => new DeleteCommand { Argument = args };
+		_commandHandlers["update"] = (args, data) => new UpdateCommand { Argument = args };
+		_commandHandlers["undo"] = (args, data) => new UndoCommand();
+		_commandHandlers["redo"] = (args, data) => new RedoCommand();
+		_commandHandlers["exit"] = (args, data) => new ExitCommand();
+	}
+
 	public static ICommand Parse(string inputString)
 	{
 		if (string.IsNullOrWhiteSpace(inputString))
 			return new UnknownCommand();
 
 		var commandData = ParseUserInput(inputString);
+		string commandName = commandData.Command.ToLower();
 
-		switch (commandData.Command.ToLower())
+		if (_commandHandlers.TryGetValue(commandName, out var handler))
 		{
-			case "help":
-				return new HelpCommand();
-			case "profile":
-				return new ProfileCommand { LogoutFlag = commandData.LogoutFlag };
-			case "add":
-				return new AddCommand
-				{
-					TaskDescription = commandData.Argument,
-					MultilineFlag = commandData.MultilineFlag
-				};
-			case "view":
-				return new ViewCommand
-				{
-					ShowIndexFlag = commandData.ShowIndexFlag,
-					ShowStatusFlag = commandData.ShowStatusFlag,
-					ShowDateFlag = commandData.ShowDateFlag,
-					ShowAllFlag = commandData.ShowAllFlag,
-					IncompleteFlag = commandData.IncompleteFlag,
-					StatisticsFlag = commandData.StatisticsFlag
-				};
-			case "read":
-				return new ReadCommand { Argument = commandData.Argument };
-			case "status":
-				return new StatusCommand { Argument = commandData.Argument };
-			case "delete":
-				return new DeleteCommand { Argument = commandData.Argument };
-			case "update":
-				return new UpdateCommand { Argument = commandData.Argument };
-			case "undo":
-				return new UndoCommand();
-			case "redo":
-				return new RedoCommand();
-			case "exit":
-				return new ExitCommand();
-			default:
-				return new UnknownCommand();
+			return handler(commandData.Argument, commandData);
 		}
+
+		return new UnknownCommand();
 	}
 
 	private static CommandData ParseUserInput(string userInput)
