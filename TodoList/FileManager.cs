@@ -6,6 +6,14 @@ using System.Text;
 
 public static class FileManager
 {
+	public static void SaveTodoListOnChange(TodoItem item)
+	{
+		if (AppInfo.CurrentProfileId.HasValue && AppInfo.Todos != null)
+		{
+			SaveUserTodos(AppInfo.CurrentProfileId.Value, AppInfo.Todos, Program.DataDir);
+		}
+	}
+
 	public static void EnsureDataDirectory(string dirPath)
 	{
 		if (!Directory.Exists(dirPath))

@@ -85,7 +85,16 @@ internal class Program
 		if (foundProfile != null)
 		{
 			AppInfo.CurrentProfileId = foundProfile.Id;
-			AppInfo.Todos = FileManager.LoadUserTodos(foundProfile.Id, DataDir);
+
+			var userTodos = FileManager.LoadUserTodos(foundProfile.Id, DataDir);
+
+			userTodos.OnTodoAdded += FileManager.SaveTodoListOnChange;
+			userTodos.OnTodoDeleted += FileManager.SaveTodoListOnChange;
+			userTodos.OnTodoUpdated += FileManager.SaveTodoListOnChange;
+			userTodos.OnStatusChanged += FileManager.SaveTodoListOnChange;
+
+			AppInfo.Todos = userTodos;
+
 			AppInfo.UndoStack.Clear();
 			AppInfo.RedoStack.Clear();
 			Console.WriteLine($"Добро пожаловать, {foundProfile.FirstName}!");
@@ -129,7 +138,16 @@ internal class Program
 		FileManager.SaveProfiles(AppInfo.AllProfiles, ProfileFilePath);
 
 		AppInfo.CurrentProfileId = newProfile.Id;
-		AppInfo.Todos = new TodoList();
+
+		var newUserTodos = new TodoList();
+
+		newUserTodos.OnTodoAdded += FileManager.SaveTodoListOnChange;
+		newUserTodos.OnTodoDeleted += FileManager.SaveTodoListOnChange;
+		newUserTodos.OnTodoUpdated += FileManager.SaveTodoListOnChange;
+		newUserTodos.OnStatusChanged += FileManager.SaveTodoListOnChange;
+
+		AppInfo.Todos = newUserTodos;
+
 		FileManager.SaveUserTodos(newProfile.Id, AppInfo.Todos, DataDir);
 
 		AppInfo.UndoStack.Clear();
@@ -148,13 +166,6 @@ internal class Program
 			if (string.IsNullOrWhiteSpace(input)) continue;
 
 			ICommand command = CommandParser.Parse(input);
-
-			if (command is UndoCommand || command is RedoCommand)
-			{
-				command.Execute();
-				continue;
-			}
-
 			command.Execute();
 
 			if (!AppInfo.CurrentProfileId.HasValue)
@@ -166,7 +177,6 @@ internal class Program
 			{
 				AppInfo.UndoStack.Push(command);
 				AppInfo.RedoStack.Clear();
-				FileManager.SaveUserTodos(AppInfo.CurrentProfileId.Value, AppInfo.Todos, DataDir);
 			}
 		}
 		Console.WriteLine("Вы вышли из профиля.");

@@ -9,7 +9,6 @@ public class RedoCommand : ICommand
 			ICommand lastUndoneCommand = AppInfo.RedoStack.Pop();
 			lastUndoneCommand.Execute();
 			AppInfo.UndoStack.Push(lastUndoneCommand);
-			FileManager.SaveUserTodos(AppInfo.CurrentProfileId.Value, AppInfo.Todos, Program.DataDir);
 		}
 		else
 		{

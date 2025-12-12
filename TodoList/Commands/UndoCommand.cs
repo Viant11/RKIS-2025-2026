@@ -9,7 +9,6 @@ public class UndoCommand : ICommand
 			ICommand lastCommand = AppInfo.UndoStack.Pop();
 			lastCommand.Unexecute();
 			AppInfo.RedoStack.Push(lastCommand);
-			FileManager.SaveUserTodos(AppInfo.CurrentProfileId.Value, AppInfo.Todos, Program.DataDir);
 		}
 		else
 		{
