@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 
 static class CommandParser
 {
@@ -10,6 +13,35 @@ static class CommandParser
 		_commandHandlers["help"] = (args, data) => new HelpCommand();
 		_commandHandlers["profile"] = (args, data) => new ProfileCommand { LogoutFlag = data.LogoutFlag };
 		_commandHandlers["add"] = (args, data) => new AddCommand { TaskDescription = args, MultilineFlag = data.MultilineFlag };
+
+		_commandHandlers["search"] = (args, data) =>
+		{
+			var cmd = new SearchCommand();
+			if (data.Parameters.TryGetValue("contains", out var c)) cmd.Contains = c;
+			if (data.Parameters.TryGetValue("starts-with", out var s)) cmd.StartsWith = s;
+			if (data.Parameters.TryGetValue("ends-with", out var e)) cmd.EndsWith = e;
+
+			if (data.Parameters.TryGetValue("from", out var f) && DateTime.TryParse(f, out var df)) cmd.FromDate = df;
+			if (data.Parameters.TryGetValue("to", out var t) && DateTime.TryParse(t, out var dt)) cmd.ToDate = dt;
+
+			if (data.Parameters.TryGetValue("status", out var stat) && Enum.TryParse<TodoStatus>(stat, true, out var ds)) cmd.Status = ds;
+
+			if (data.Parameters.TryGetValue("sort", out var sort)) cmd.SortBy = sort;
+			if (data.Parameters.ContainsKey("desc")) cmd.IsDesc = true;
+
+			if (data.Parameters.TryGetValue("top", out var top) && int.TryParse(top, out var topN)) cmd.Top = topN;
+
+			if (string.IsNullOrEmpty(cmd.Contains) &&
+				string.IsNullOrEmpty(cmd.StartsWith) &&
+				string.IsNullOrEmpty(cmd.EndsWith) &&
+				!string.IsNullOrWhiteSpace(args))
+			{
+				cmd.Contains = args;
+			}
+
+			return cmd;
+		};
+
 		_commandHandlers["view"] = (args, data) => new ViewCommand
 		{
 			ShowIndexFlag = data.ShowIndexFlag,
@@ -44,71 +76,119 @@ static class CommandParser
 		return new UnknownCommand();
 	}
 
-	private static CommandData ParseUserInput(string userInput)
+	private static List<string> SplitCommandLine(string line)
 	{
-		var result = new CommandData();
-		if (string.IsNullOrEmpty(userInput)) return result;
+		var result = new List<string>();
+		var current = new StringBuilder();
+		bool inQuotes = false;
 
-		string[] parts = userInput.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-		if (parts.Length == 0) return result;
-
-		result.Command = parts[0];
-		string argument = "";
-
-		for (int i = 1; i < parts.Length; i++)
+		for (int i = 0; i < line.Length; i++)
 		{
-			if (parts[i] == null) continue;
-
-			if (parts[i].StartsWith("--"))
+			char c = line[i];
+			if (c == '\"')
 			{
-				string flagName = parts[i].Substring(2);
-				switch (flagName)
-				{
-					case "multiline": result.MultilineFlag = true; break;
-					case "index": result.ShowIndexFlag = true; break;
-					case "status": result.ShowStatusFlag = true; break;
-					case "update-date": result.ShowDateFlag = true; break;
-					case "all": result.ShowAllFlag = true; break;
-					case "incomplete": result.IncompleteFlag = true; break;
-					case "statistics": result.StatisticsFlag = true; break;
-					case "out": result.LogoutFlag = true; break;
-				}
+				inQuotes = !inQuotes;
 			}
-			else if (parts[i].StartsWith("-") && parts[i].Length > 1)
+			else if (c == ' ' && !inQuotes)
 			{
-				string shortFlags = parts[i].Substring(1);
-				foreach (char flagChar in shortFlags)
+				if (current.Length > 0)
 				{
-					switch (flagChar)
-					{
-						case 'm': result.MultilineFlag = true; break;
-						case 'i': result.ShowIndexFlag = true; break;
-						case 's': result.ShowStatusFlag = true; break;
-						case 'd': result.ShowDateFlag = true; break;
-						case 'a': result.ShowAllFlag = true; break;
-						case 'I': result.IncompleteFlag = true; break;
-						case 'S': result.StatisticsFlag = true; break;
-						case 'o': result.LogoutFlag = true; break;
-					}
+					result.Add(current.ToString());
+					current.Clear();
 				}
 			}
 			else
 			{
-				if (string.IsNullOrEmpty(argument))
-					argument = parts[i];
+				current.Append(c);
+			}
+		}
+		if (current.Length > 0) result.Add(current.ToString());
+		return result;
+	}
+
+	private static CommandData ParseUserInput(string userInput)
+	{
+		var result = new CommandData
+		{
+			Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+		};
+
+		if (string.IsNullOrEmpty(userInput)) return result;
+
+		List<string> parts = SplitCommandLine(userInput);
+		if (parts.Count == 0) return result;
+
+		result.Command = parts[0];
+
+		var looseArgs = new List<string>();
+
+		for (int i = 1; i < parts.Count; i++)
+		{
+			string part = parts[i];
+
+			if (part.StartsWith("--"))
+			{
+				string key = part.Substring(2);
+
+				if (i + 1 < parts.Count && !parts[i + 1].StartsWith("-"))
+				{
+					result.Parameters[key] = parts[i + 1];
+
+					HandleLegacyFlags(key, ref result);
+
+					i++;
+				}
 				else
-					argument += " " + parts[i];
+				{
+					result.Parameters[key] = "true";
+					HandleLegacyFlags(key, ref result);
+				}
+			}
+			else if (part.StartsWith("-"))
+			{
+				string shortFlags = part.Substring(1);
+				foreach (char c in shortFlags)
+				{
+					HandleLegacyShortFlag(c, ref result);
+				}
+			}
+			else
+			{
+				looseArgs.Add(part);
 			}
 		}
 
-		if (result.ShowAllFlag)
-		{
-			result.ShowIndexFlag = true;
-			result.ShowStatusFlag = true;
-			result.ShowDateFlag = true;
-		}
-
-		result.Argument = argument;
+		result.Argument = string.Join(" ", looseArgs);
 		return result;
+	}
+
+	private static void HandleLegacyFlags(string key, ref CommandData data)
+	{
+		switch (key.ToLower())
+		{
+			case "multiline": data.MultilineFlag = true; break;
+			case "index": data.ShowIndexFlag = true; break;
+			case "status": data.ShowStatusFlag = true; break;
+			case "update-date": data.ShowDateFlag = true; break;
+			case "all": data.ShowAllFlag = true; break;
+			case "incomplete": data.IncompleteFlag = true; break;
+			case "statistics": data.StatisticsFlag = true; break;
+			case "out": data.LogoutFlag = true; break;
+		}
+	}
+
+	private static void HandleLegacyShortFlag(char flag, ref CommandData data)
+	{
+		switch (flag)
+		{
+			case 'm': data.MultilineFlag = true; break;
+			case 'i': data.ShowIndexFlag = true; break;
+			case 's': data.ShowStatusFlag = true; break;
+			case 'd': data.ShowDateFlag = true; break;
+			case 'a': data.ShowAllFlag = true; break;
+			case 'I': data.IncompleteFlag = true; break;
+			case 'S': data.StatisticsFlag = true; break;
+			case 'o': data.LogoutFlag = true; break;
+		}
 	}
 }

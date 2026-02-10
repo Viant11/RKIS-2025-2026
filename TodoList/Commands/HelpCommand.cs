@@ -10,28 +10,28 @@ profile - выводит данные о пользователе
 add - добавляет новую задачу
 view - выводит все задачи из массива
 read <idx> - показывает полную информацию о задаче
-status <idx> <status> - изменяет статус задачи (статусы: {string.Join(", ", Enum.GetNames(typeof(TodoStatus)))})
+status <idx> <status> - изменяет статус задачи
 delete <idx> - удаляет задачу по индексу
 update <idx> ""new_text"" - обновляет текст задачи
 undo - отменить последнее действие
 redo - вернуть отмененное действие
 exit - сохраняет данные и завершает программу
 
-Флаги для add:
---multiline или -m - многострочный ввод для add
+SEARCH - расширенный поиск:
+search --contains ""текст""   : содержит текст
+search --starts-with ""текст"" : начинается с текста
+search --ends-with ""текст""   : заканчивается текстом
+search --status <Status>     : поиск по статусу
+search --from yyyy-MM-dd     : изменен не раньше даты
+search --to yyyy-MM-dd       : изменен не позже даты
+search --sort <text|date>    : сортировка
+search --desc                : по убыванию
+search --top <N>             : показать топ-N результатов
 
-Флаги для profile:
---out или -o - выйти из текущего профиля
-
-Флаги для view:
---index или -i - показывать индекс задачи
---status или -s - показывать статус задачи
---update-date или -d - показывать дату изменения
---all или -a - показывать все данные
---incomplete или -I - показывать только невыполненные
---statistics или -S - показывать статистику
-
-Примеры: view -isd, view --all, status 1 InProgress, profile -o";
+Примеры:
+search --contains ""важно"" --status InProgress
+search --sort date --desc --top 5
+search --from 2023-01-01 --to 2023-12-31";
 
 		Console.WriteLine(helpText);
 	}
