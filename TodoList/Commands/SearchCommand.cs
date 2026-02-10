@@ -29,34 +29,22 @@ public class SearchCommand : ICommand
 			.Select((item, index) => new { Item = item, Index = index });
 
 		if (!string.IsNullOrEmpty(Contains))
-		{
 			query = query.Where(x => x.Item.Text.Contains(Contains, StringComparison.OrdinalIgnoreCase));
-		}
 
 		if (!string.IsNullOrEmpty(StartsWith))
-		{
 			query = query.Where(x => x.Item.Text.Trim().StartsWith(StartsWith, StringComparison.OrdinalIgnoreCase));
-		}
 
 		if (!string.IsNullOrEmpty(EndsWith))
-		{
 			query = query.Where(x => x.Item.Text.Trim().EndsWith(EndsWith, StringComparison.OrdinalIgnoreCase));
-		}
 
 		if (FromDate.HasValue)
-		{
 			query = query.Where(x => x.Item.LastUpdate.Date >= FromDate.Value.Date);
-		}
 
 		if (ToDate.HasValue)
-		{
 			query = query.Where(x => x.Item.LastUpdate.Date <= ToDate.Value.Date);
-		}
 
 		if (Status.HasValue)
-		{
 			query = query.Where(x => x.Item.Status == Status.Value);
-		}
 
 		if (!string.IsNullOrEmpty(SortBy))
 		{
@@ -84,7 +72,7 @@ public class SearchCommand : ICommand
 		Console.WriteLine("=== Результаты поиска ===");
 		if (results.Count == 0)
 		{
-			Console.WriteLine("Ничего не найдено по заданным критериям.");
+			Console.WriteLine("Ничего не найдено.");
 			return;
 		}
 
@@ -101,8 +89,5 @@ public class SearchCommand : ICommand
 		Console.WriteLine($"Найдено задач: {results.Count}");
 	}
 
-	public void Unexecute()
-	{
-	
-	}
+	public void Unexecute() { }
 }

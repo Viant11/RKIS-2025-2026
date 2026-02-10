@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 
 static class CommandParser
 {
@@ -17,6 +16,7 @@ static class CommandParser
 		_commandHandlers["search"] = (args, data) =>
 		{
 			var cmd = new SearchCommand();
+
 			if (data.Parameters.TryGetValue("contains", out var c)) cmd.Contains = c;
 			if (data.Parameters.TryGetValue("starts-with", out var s)) cmd.StartsWith = s;
 			if (data.Parameters.TryGetValue("ends-with", out var e)) cmd.EndsWith = e;
@@ -28,7 +28,6 @@ static class CommandParser
 
 			if (data.Parameters.TryGetValue("sort", out var sort)) cmd.SortBy = sort;
 			if (data.Parameters.ContainsKey("desc")) cmd.IsDesc = true;
-
 			if (data.Parameters.TryGetValue("top", out var top) && int.TryParse(top, out var topN)) cmd.Top = topN;
 
 			if (string.IsNullOrEmpty(cmd.Contains) &&
@@ -129,13 +128,10 @@ static class CommandParser
 			if (part.StartsWith("--"))
 			{
 				string key = part.Substring(2);
-
 				if (i + 1 < parts.Count && !parts[i + 1].StartsWith("-"))
 				{
 					result.Parameters[key] = parts[i + 1];
-
 					HandleLegacyFlags(key, ref result);
-
 					i++;
 				}
 				else
