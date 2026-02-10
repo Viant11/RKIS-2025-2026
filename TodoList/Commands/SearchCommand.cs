@@ -69,13 +69,13 @@ public class SearchCommand : ICommand
 
 		var results = query.ToList();
 
-		Console.WriteLine("=== Результаты поиска ===");
 		if (results.Count == 0)
 		{
-			Console.WriteLine("Ничего не найдено.");
+			Console.WriteLine("Ничего не найдено");
 			return;
 		}
 
+		Console.WriteLine("=== Результаты поиска ===");
 		string header = "Индекс".PadRight(8) + " | " + "Текст задачи".PadRight(33) + " | " + "Статус".PadRight(12) + " | Дата изменения";
 		Console.WriteLine(header);
 		Console.WriteLine(new string('-', header.Length));

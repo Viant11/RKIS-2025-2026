@@ -21,14 +21,20 @@ static class CommandParser
 			if (data.Parameters.TryGetValue("starts-with", out var s)) cmd.StartsWith = s;
 			if (data.Parameters.TryGetValue("ends-with", out var e)) cmd.EndsWith = e;
 
-			if (data.Parameters.TryGetValue("from", out var f) && DateTime.TryParse(f, out var df)) cmd.FromDate = df;
-			if (data.Parameters.TryGetValue("to", out var t) && DateTime.TryParse(t, out var dt)) cmd.ToDate = dt;
+			if (data.Parameters.TryGetValue("from", out var f) && DateTime.TryParse(f, out var df))
+				cmd.FromDate = df;
 
-			if (data.Parameters.TryGetValue("status", out var stat) && Enum.TryParse<TodoStatus>(stat, true, out var ds)) cmd.Status = ds;
+			if (data.Parameters.TryGetValue("to", out var t) && DateTime.TryParse(t, out var dt))
+				cmd.ToDate = dt;
+
+			if (data.Parameters.TryGetValue("status", out var stat) && Enum.TryParse<TodoStatus>(stat, true, out var ds))
+				cmd.Status = ds;
+
+			if (data.Parameters.TryGetValue("top", out var top) && int.TryParse(top, out var topN))
+				cmd.Top = topN;
 
 			if (data.Parameters.TryGetValue("sort", out var sort)) cmd.SortBy = sort;
 			if (data.Parameters.ContainsKey("desc")) cmd.IsDesc = true;
-			if (data.Parameters.TryGetValue("top", out var top) && int.TryParse(top, out var topN)) cmd.Top = topN;
 
 			if (string.IsNullOrEmpty(cmd.Contains) &&
 				string.IsNullOrEmpty(cmd.StartsWith) &&
