@@ -32,10 +32,12 @@ public class SearchCommand : ICommand
 		{
 			query = query.Where(x => x.Item.Text.Contains(Contains, StringComparison.OrdinalIgnoreCase));
 		}
+
 		if (!string.IsNullOrEmpty(StartsWith))
 		{
 			query = query.Where(x => x.Item.Text.Trim().StartsWith(StartsWith, StringComparison.OrdinalIgnoreCase));
 		}
+
 		if (!string.IsNullOrEmpty(EndsWith))
 		{
 			query = query.Where(x => x.Item.Text.Trim().EndsWith(EndsWith, StringComparison.OrdinalIgnoreCase));
@@ -45,6 +47,7 @@ public class SearchCommand : ICommand
 		{
 			query = query.Where(x => x.Item.LastUpdate.Date >= FromDate.Value.Date);
 		}
+
 		if (ToDate.HasValue)
 		{
 			query = query.Where(x => x.Item.LastUpdate.Date <= ToDate.Value.Date);
