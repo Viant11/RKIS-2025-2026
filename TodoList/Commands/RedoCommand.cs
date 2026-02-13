@@ -6,15 +6,17 @@ public class RedoCommand : ICommand
 	{
 		if (AppInfo.RedoStack.Count > 0)
 		{
-			ICommand lastUndoneCommand = AppInfo.RedoStack.Pop();
-			lastUndoneCommand.Execute();
-			AppInfo.UndoStack.Push(lastUndoneCommand);
+			IUndo lastUndoneCommand = AppInfo.RedoStack.Pop();
+
+			if (lastUndoneCommand is ICommand command)
+			{
+				command.Execute();
+				AppInfo.UndoStack.Push(lastUndoneCommand);
+			}
 		}
 		else
 		{
 			Console.WriteLine("Нечего возвращать.");
 		}
 	}
-
-	public void Unexecute() { }
 }

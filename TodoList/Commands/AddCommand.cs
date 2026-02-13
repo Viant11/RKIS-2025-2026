@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-public class AddCommand : ICommand
+public class AddCommand : ICommand, IUndo
 {
 	public string? TaskDescription { get; set; }
 	public bool MultilineFlag { get; set; }
@@ -19,7 +19,6 @@ public class AddCommand : ICommand
 		if (MultilineFlag)
 		{
 			taskText = ReadMultilineInput();
-
 			if (string.IsNullOrWhiteSpace(taskText))
 			{
 				Console.WriteLine("Ошибка: Задача не может быть пустой");
@@ -33,7 +32,6 @@ public class AddCommand : ICommand
 				Console.WriteLine("Ошибка: Укажите задачу. Пример: add Новая задача");
 				return;
 			}
-
 			taskText = TaskDescription.Trim();
 		}
 
@@ -55,23 +53,17 @@ public class AddCommand : ICommand
 		Console.WriteLine("Многострочный режим. Вводите текст задачи построчно. Для завершения введите !end");
 		string result = "";
 		string? line;
-
 		while (true)
 		{
 			Console.Write("> ");
 			line = Console.ReadLine();
-
-			if (line == "!end")
-				break;
-
+			if (line == "!end") break;
 			if (!string.IsNullOrWhiteSpace(line))
 			{
-				if (!string.IsNullOrEmpty(result))
-					result += "\n";
+				if (!string.IsNullOrEmpty(result)) result += "\n";
 				result += line;
 			}
 		}
-
 		return result.Trim();
 	}
 }

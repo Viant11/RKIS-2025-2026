@@ -24,9 +24,9 @@ internal class Program
 		FileManager.EnsureDataDirectory(DataDir);
 
 		AppInfo.AllProfiles = FileManager.LoadProfiles(ProfileFilePath);
-		AppInfo.UndoStack = new Stack<ICommand>();
-		AppInfo.RedoStack = new Stack<ICommand>();
 
+		AppInfo.UndoStack = new Stack<IUndo>();
+		AppInfo.RedoStack = new Stack<IUndo>();
 
 		while (true)
 		{
@@ -52,25 +52,13 @@ internal class Program
 
 			switch (choice)
 			{
-				case "y":
-					LoginUser();
-					break;
-				case "n":
-					CreateNewProfile();
-					break;
-				case "exit":
-					AppInfo.CurrentProfileId = Guid.Empty;
-					break;
-				default:
-					Console.WriteLine("Неверный ввод. Попробуйте еще раз.");
-					break;
+				case "y": LoginUser(); break;
+				case "n": CreateNewProfile(); break;
+				case "exit": AppInfo.CurrentProfileId = Guid.Empty; break;
+				default: Console.WriteLine("Неверный ввод. Попробуйте еще раз."); break;
 			}
 		}
-
-		if (AppInfo.CurrentProfileId == Guid.Empty)
-		{
-			AppInfo.CurrentProfileId = null;
-		}
+		if (AppInfo.CurrentProfileId == Guid.Empty) AppInfo.CurrentProfileId = null;
 	}
 
 	private static void LoginUser()
@@ -85,14 +73,11 @@ internal class Program
 		if (foundProfile != null)
 		{
 			AppInfo.CurrentProfileId = foundProfile.Id;
-
 			var userTodos = FileManager.LoadUserTodos(foundProfile.Id, DataDir);
-
 			userTodos.OnTodoAdded += FileManager.SaveTodoListOnChange;
 			userTodos.OnTodoDeleted += FileManager.SaveTodoListOnChange;
 			userTodos.OnTodoUpdated += FileManager.SaveTodoListOnChange;
 			userTodos.OnStatusChanged += FileManager.SaveTodoListOnChange;
-
 			AppInfo.Todos = userTodos;
 
 			AppInfo.UndoStack.Clear();
@@ -127,9 +112,7 @@ internal class Program
 		{
 			Console.Write("Введите год рождения: ");
 			if (int.TryParse(Console.ReadLine(), out birthYear) && birthYear > 1900 && birthYear <= DateTime.Now.Year)
-			{
 				break;
-			}
 			Console.WriteLine("Некорректный год рождения.");
 		}
 
@@ -138,21 +121,16 @@ internal class Program
 		FileManager.SaveProfiles(AppInfo.AllProfiles, ProfileFilePath);
 
 		AppInfo.CurrentProfileId = newProfile.Id;
-
 		var newUserTodos = new TodoList();
-
 		newUserTodos.OnTodoAdded += FileManager.SaveTodoListOnChange;
 		newUserTodos.OnTodoDeleted += FileManager.SaveTodoListOnChange;
 		newUserTodos.OnTodoUpdated += FileManager.SaveTodoListOnChange;
 		newUserTodos.OnStatusChanged += FileManager.SaveTodoListOnChange;
-
 		AppInfo.Todos = newUserTodos;
-
 		FileManager.SaveUserTodos(newProfile.Id, AppInfo.Todos, DataDir);
 
 		AppInfo.UndoStack.Clear();
 		AppInfo.RedoStack.Clear();
-
 		Console.WriteLine("Новый профиль успешно создан!");
 	}
 
@@ -173,9 +151,9 @@ internal class Program
 				break;
 			}
 
-			if (command is AddCommand || command is DeleteCommand || command is UpdateCommand || command is StatusCommand)
+			if (command is IUndo undoableCommand)
 			{
-				AppInfo.UndoStack.Push(command);
+				AppInfo.UndoStack.Push(undoableCommand);
 				AppInfo.RedoStack.Clear();
 			}
 		}

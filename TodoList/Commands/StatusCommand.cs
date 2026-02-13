@@ -1,6 +1,6 @@
 ﻿using System;
 
-public class StatusCommand : ICommand
+public class StatusCommand : ICommand, IUndo
 {
 	public string? Argument { get; set; }
 	private TodoStatus _oldStatus;

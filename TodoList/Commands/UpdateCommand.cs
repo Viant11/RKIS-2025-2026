@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-public class UpdateCommand : ICommand
+public class UpdateCommand : ICommand, IUndo
 {
 	public string? Argument { get; set; }
 	private string _oldText;

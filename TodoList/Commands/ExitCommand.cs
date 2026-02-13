@@ -18,6 +18,4 @@ public class ExitCommand : ICommand
 		Console.WriteLine("Программа завершена.");
 		Environment.Exit(0);
 	}
-
-	public void Unexecute() { }
 }

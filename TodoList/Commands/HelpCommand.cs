@@ -35,6 +35,4 @@ search --from 2023-01-01 --to 2023-12-31";
 
 		Console.WriteLine(helpText);
 	}
-
-	public void Unexecute() { }
 }

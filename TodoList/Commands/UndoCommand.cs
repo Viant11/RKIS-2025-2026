@@ -6,7 +6,7 @@ public class UndoCommand : ICommand
 	{
 		if (AppInfo.UndoStack.Count > 0)
 		{
-			ICommand lastCommand = AppInfo.UndoStack.Pop();
+			IUndo lastCommand = AppInfo.UndoStack.Pop();
 			lastCommand.Unexecute();
 			AppInfo.RedoStack.Push(lastCommand);
 		}
@@ -15,6 +15,4 @@ public class UndoCommand : ICommand
 			Console.WriteLine("Нечего отменять.");
 		}
 	}
-
-	public void Unexecute() { }
 }

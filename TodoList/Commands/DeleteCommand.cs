@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-public class DeleteCommand : ICommand
+public class DeleteCommand : ICommand, IUndo
 {
 	public string? Argument { get; set; }
 	private TodoItem _deletedItem;

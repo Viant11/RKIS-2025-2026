@@ -25,40 +25,39 @@ public class SearchCommand : ICommand
 			return;
 		}
 
-		var query = AppInfo.Todos
-			.Select((item, index) => new { Item = item, Index = index });
+		var query = AppInfo.Todos.AsEnumerable();
 
 		if (!string.IsNullOrEmpty(Contains))
-			query = query.Where(x => x.Item.Text.Contains(Contains, StringComparison.OrdinalIgnoreCase));
+			query = query.Where(x => x.Text.Contains(Contains, StringComparison.OrdinalIgnoreCase));
 
 		if (!string.IsNullOrEmpty(StartsWith))
-			query = query.Where(x => x.Item.Text.Trim().StartsWith(StartsWith, StringComparison.OrdinalIgnoreCase));
+			query = query.Where(x => x.Text.Trim().StartsWith(StartsWith, StringComparison.OrdinalIgnoreCase));
 
 		if (!string.IsNullOrEmpty(EndsWith))
-			query = query.Where(x => x.Item.Text.Trim().EndsWith(EndsWith, StringComparison.OrdinalIgnoreCase));
+			query = query.Where(x => x.Text.Trim().EndsWith(EndsWith, StringComparison.OrdinalIgnoreCase));
 
 		if (FromDate.HasValue)
-			query = query.Where(x => x.Item.LastUpdate.Date >= FromDate.Value.Date);
+			query = query.Where(x => x.LastUpdate.Date >= FromDate.Value.Date);
 
 		if (ToDate.HasValue)
-			query = query.Where(x => x.Item.LastUpdate.Date <= ToDate.Value.Date);
+			query = query.Where(x => x.LastUpdate.Date <= ToDate.Value.Date);
 
 		if (Status.HasValue)
-			query = query.Where(x => x.Item.Status == Status.Value);
+			query = query.Where(x => x.Status == Status.Value);
 
 		if (!string.IsNullOrEmpty(SortBy))
 		{
 			if (SortBy.Equals("text", StringComparison.OrdinalIgnoreCase))
 			{
 				query = IsDesc
-					? query.OrderByDescending(x => x.Item.Text)
-					: query.OrderBy(x => x.Item.Text);
+					? query.OrderByDescending(x => x.Text)
+					: query.OrderBy(x => x.Text);
 			}
 			else if (SortBy.Equals("date", StringComparison.OrdinalIgnoreCase))
 			{
 				query = IsDesc
-					? query.OrderByDescending(x => x.Item.LastUpdate)
-					: query.OrderBy(x => x.Item.LastUpdate);
+					? query.OrderByDescending(x => x.LastUpdate)
+					: query.OrderBy(x => x.LastUpdate);
 			}
 		}
 
@@ -67,27 +66,18 @@ public class SearchCommand : ICommand
 			query = query.Take(Top.Value);
 		}
 
-		var results = query.ToList();
+		var resultsList = query.ToList();
 
-		if (results.Count == 0)
+		if (resultsList.Count == 0)
 		{
 			Console.WriteLine("Ничего не найдено");
 			return;
 		}
 
 		Console.WriteLine("=== Результаты поиска ===");
-		string header = "Индекс".PadRight(8) + " | " + "Текст задачи".PadRight(33) + " | " + "Статус".PadRight(12) + " | Дата изменения";
-		Console.WriteLine(header);
-		Console.WriteLine(new string('-', header.Length));
+		var tempTodoList = new TodoList(resultsList);
+		tempTodoList.View(true, true, true, true);
 
-		foreach (var res in results)
-		{
-			Console.WriteLine($"#{res.Index + 1}".PadRight(8) + " | " + res.Item.GetShortInfo());
-		}
-
-		Console.WriteLine(new string('-', header.Length));
-		Console.WriteLine($"Найдено задач: {results.Count}");
+		Console.WriteLine($"Найдено задач: {resultsList.Count}");
 	}
-
-	public void Unexecute() { }
 }

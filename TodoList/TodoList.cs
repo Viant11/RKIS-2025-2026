@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+
 public class TodoList : IEnumerable<TodoItem>
 {
 	public event Action<TodoItem> OnTodoAdded;
 	public event Action<TodoItem> OnTodoDeleted;
 	public event Action<TodoItem> OnTodoUpdated;
 	public event Action<TodoItem> OnStatusChanged;
+
 	private List<TodoItem> tasks;
 
 	public int Count => tasks.Count;
@@ -26,6 +28,11 @@ public class TodoList : IEnumerable<TodoItem>
 		tasks = new List<TodoItem>();
 	}
 
+	public TodoList(List<TodoItem> existingTasks)
+	{
+		tasks = existingTasks;
+	}
+
 	public void Add(TodoItem item)
 	{
 		tasks.Add(item);
@@ -41,7 +48,6 @@ public class TodoList : IEnumerable<TodoItem>
 		tasks.RemoveAt(index);
 		OnTodoDeleted?.Invoke(item);
 	}
-
 
 	public void Insert(int index, TodoItem item)
 	{

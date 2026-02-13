@@ -6,6 +6,4 @@ public class UnknownCommand : ICommand
 	{
 		Console.WriteLine("Неизвестная команда. Введите команду help для просмотра доступных команд");
 	}
-
-	public void Unexecute() { }
 }
