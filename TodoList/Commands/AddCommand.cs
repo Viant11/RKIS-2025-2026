@@ -9,31 +9,24 @@ public class AddCommand : ICommand, IUndo
 	public void Execute()
 	{
 		if (AppInfo.Todos == null)
-		{
-			Console.WriteLine("Ошибка: TodoList не инициализирован");
-			return;
-		}
+			throw new InvalidOperationException("TodoList не инициализирован");
 
 		string taskText = "";
 
 		if (MultilineFlag)
 		{
 			taskText = ReadMultilineInput();
-			if (string.IsNullOrWhiteSpace(taskText))
-			{
-				Console.WriteLine("Ошибка: Задача не может быть пустой");
-				return;
-			}
 		}
 		else
 		{
 			if (string.IsNullOrWhiteSpace(TaskDescription))
-			{
-				Console.WriteLine("Ошибка: Укажите задачу. Пример: add Новая задача");
-				return;
-			}
+				throw new InvalidArgumentException("Текст задачи не может быть пустым. Пример: add Купить молоко");
+
 			taskText = TaskDescription.Trim();
 		}
+
+		if (string.IsNullOrWhiteSpace(taskText))
+			throw new InvalidArgumentException("Попытка добавить пустую задачу.");
 
 		AppInfo.Todos.Add(new TodoItem(taskText));
 		Console.WriteLine("Задача добавлена!");
@@ -57,7 +50,6 @@ public class AddCommand : ICommand, IUndo
 		{
 			Console.Write("> ");
 			line = Console.ReadLine();
-
 			if (line == null || line == "!end") break;
 
 			if (!string.IsNullOrWhiteSpace(line))

@@ -15,16 +15,14 @@ public class ProfileCommand : ICommand
 
 		if (!AppInfo.CurrentProfileId.HasValue)
 		{
-			Console.WriteLine("Вы не вошли ни в один профиль.");
-			return;
+			throw new AuthenticationException("Пользователь не авторизован.");
 		}
 
 		Profile currentUser = AppInfo.AllProfiles.FirstOrDefault(p => p.Id == AppInfo.CurrentProfileId.Value);
 
 		if (currentUser == null)
 		{
-			Console.WriteLine("Ошибка: не удалось найти данные текущего профиля.");
-			return;
+			throw new ProfileNotFoundException("Текущий профиль не найден в базе данных.");
 		}
 
 		string profile = @$"

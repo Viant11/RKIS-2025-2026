@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 
 public class DeleteCommand : ICommand, IUndo
 {
@@ -9,36 +8,22 @@ public class DeleteCommand : ICommand, IUndo
 
 	public void Execute()
 	{
-		try
-		{
-			if (AppInfo.Todos == null)
-			{
-				Console.WriteLine("Ошибка: TodoList не инициализирован");
-				return;
-			}
+		if (AppInfo.Todos == null)
+			throw new InvalidOperationException("TodoList не инициализирован");
 
-			if (string.IsNullOrWhiteSpace(Argument))
-			{
-				Console.WriteLine("Ошибка: Укажите индекс задачи. Пример: delete 1");
-				return;
-			}
+		if (string.IsNullOrWhiteSpace(Argument))
+			throw new InvalidArgumentException("Укажите индекс задачи для удаления. Пример: delete 1");
 
-			if (int.TryParse(Argument, out int index) && index > 0 && index <= AppInfo.Todos.Count)
-			{
-				_deletedItemIndex = index - 1;
-				_deletedItem = AppInfo.Todos[_deletedItemIndex];
-				AppInfo.Todos.Delete(_deletedItemIndex);
-				Console.WriteLine($"Задача {index} удалена");
-			}
-			else
-			{
-				Console.WriteLine("Ошибка: Неверный индекс задачи. Пример: delete 1");
-			}
-		}
-		catch (Exception ex)
-		{
-			Console.WriteLine($"Ошибка при удалении задачи: {ex.Message}");
-		}
+		if (!int.TryParse(Argument, out int index))
+			throw new InvalidArgumentException($"'{Argument}' не является числом.");
+
+		if (index <= 0 || index > AppInfo.Todos.Count)
+			throw new TaskNotFoundException($"Задача с индексом {index} не найдена. Всего задач: {AppInfo.Todos.Count}");
+
+		_deletedItemIndex = index - 1;
+		_deletedItem = AppInfo.Todos[_deletedItemIndex];
+		AppInfo.Todos.Delete(_deletedItemIndex);
+		Console.WriteLine($"Задача {index} удалена");
 	}
 
 	public void Unexecute()

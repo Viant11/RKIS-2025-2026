@@ -46,7 +46,7 @@ internal class Program
 		}
 		catch (Exception ex)
 		{
-			Console.WriteLine($"Критическая ошибка приложения: {ex.Message}");
+			Console.WriteLine($"\nКРИТИЧЕСКАЯ ОШИБКА ПРИЛОЖЕНИЯ: {ex.Message}");
 		}
 	}
 
@@ -57,13 +57,28 @@ internal class Program
 			Console.WriteLine("\nВойти в существующий профиль? [y/n] (или 'exit' для выхода)");
 			string choice = Console.ReadLine()?.ToLower();
 
-			switch (choice)
+			try
 			{
-				case "y": LoginUser(); break;
-				case "n": CreateNewProfile(); break;
-				case "exit": AppInfo.CurrentProfileId = Guid.Empty; break;
-				case null: AppInfo.CurrentProfileId = Guid.Empty; break;
-				default: Console.WriteLine("Неверный ввод. Попробуйте еще раз."); break;
+				switch (choice)
+				{
+					case "y": LoginUser(); break;
+					case "n": CreateNewProfile(); break;
+					case "exit": AppInfo.CurrentProfileId = Guid.Empty; break;
+					case null: AppInfo.CurrentProfileId = Guid.Empty; break;
+					default: Console.WriteLine("Неверный ввод. Попробуйте еще раз."); break;
+				}
+			}
+			catch (AuthenticationException ex)
+			{
+				Console.WriteLine($"Ошибка входа: {ex.Message}");
+			}
+			catch (DuplicateLoginException ex)
+			{
+				Console.WriteLine($"Ошибка регистрации: {ex.Message}");
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Ошибка: {ex.Message}");
 			}
 		}
 		if (AppInfo.CurrentProfileId == Guid.Empty) AppInfo.CurrentProfileId = null;
@@ -78,34 +93,35 @@ internal class Program
 
 		Profile foundProfile = AppInfo.AllProfiles.FirstOrDefault(p => p.Login == login && p.Password == password);
 
-		if (foundProfile != null)
+		if (foundProfile == null)
 		{
-			AppInfo.CurrentProfileId = foundProfile.Id;
-			var userTodos = FileManager.LoadUserTodos(foundProfile.Id, DataDir);
-			userTodos.OnTodoAdded += FileManager.SaveTodoListOnChange;
-			userTodos.OnTodoDeleted += FileManager.SaveTodoListOnChange;
-			userTodos.OnTodoUpdated += FileManager.SaveTodoListOnChange;
-			userTodos.OnStatusChanged += FileManager.SaveTodoListOnChange;
-			AppInfo.Todos = userTodos;
+			throw new AuthenticationException("Неверный логин или пароль.");
+		}
 
-			AppInfo.UndoStack.Clear();
-			AppInfo.RedoStack.Clear();
-			Console.WriteLine($"Добро пожаловать, {foundProfile.FirstName}!");
-		}
-		else
-		{
-			Console.WriteLine("Неверный логин или пароль.");
-		}
+		AppInfo.CurrentProfileId = foundProfile.Id;
+		var userTodos = FileManager.LoadUserTodos(foundProfile.Id, DataDir);
+		userTodos.OnTodoAdded += FileManager.SaveTodoListOnChange;
+		userTodos.OnTodoDeleted += FileManager.SaveTodoListOnChange;
+		userTodos.OnTodoUpdated += FileManager.SaveTodoListOnChange;
+		userTodos.OnStatusChanged += FileManager.SaveTodoListOnChange;
+		AppInfo.Todos = userTodos;
+
+		AppInfo.UndoStack.Clear();
+		AppInfo.RedoStack.Clear();
+		Console.WriteLine($"Добро пожаловать, {foundProfile.FirstName}!");
 	}
 
 	private static void CreateNewProfile()
 	{
 		Console.Write("Введите новый логин: ");
 		string login = Console.ReadLine();
-		if (string.IsNullOrWhiteSpace(login) || AppInfo.AllProfiles.Any(p => p.Login.Equals(login, StringComparison.OrdinalIgnoreCase)))
+
+		if (string.IsNullOrWhiteSpace(login))
+			throw new InvalidArgumentException("Логин не может быть пустым.");
+
+		if (AppInfo.AllProfiles.Any(p => p.Login.Equals(login, StringComparison.OrdinalIgnoreCase)))
 		{
-			Console.WriteLine("Этот логин уже занят или некорректен.");
-			return;
+			throw new DuplicateLoginException($"Логин '{login}' уже занят.");
 		}
 
 		Console.Write("Введите пароль: ");
@@ -150,9 +166,7 @@ internal class Program
 		{
 			Console.Write("> ");
 			string input = Console.ReadLine();
-
 			if (input == null) break;
-
 			if (string.IsNullOrWhiteSpace(input)) continue;
 
 			try
@@ -160,10 +174,7 @@ internal class Program
 				ICommand command = CommandParser.Parse(input);
 				command.Execute();
 
-				if (!AppInfo.CurrentProfileId.HasValue)
-				{
-					break;
-				}
+				if (!AppInfo.CurrentProfileId.HasValue) break;
 
 				if (command is IUndo undoableCommand)
 				{
@@ -171,9 +182,25 @@ internal class Program
 					AppInfo.RedoStack.Clear();
 				}
 			}
+			catch (InvalidCommandException ex)
+			{
+				Console.WriteLine($"ОШИБКА КОМАНДЫ: {ex.Message}");
+			}
+			catch (InvalidArgumentException ex)
+			{
+				Console.WriteLine($"ОШИБКА АРГУМЕНТОВ: {ex.Message}");
+			}
+			catch (TaskNotFoundException ex)
+			{
+				Console.WriteLine($"ОШИБКА ПОИСКА: {ex.Message}");
+			}
+			catch (ProfileNotFoundException ex)
+			{
+				Console.WriteLine($"ОШИБКА ПРОФИЛЯ: {ex.Message}");
+			}
 			catch (Exception ex)
 			{
-				Console.WriteLine($"Ошибка: {ex.Message}");
+				Console.WriteLine($"НЕИЗВЕСТНАЯ ОШИБКА: {ex.Message}");
 			}
 		}
 		Console.WriteLine("Вы вышли из профиля.");
