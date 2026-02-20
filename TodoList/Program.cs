@@ -28,18 +28,26 @@ internal class Program
 		AppInfo.UndoStack = new Stack<IUndo>();
 		AppInfo.RedoStack = new Stack<IUndo>();
 
-		while (true)
+		try
 		{
-			HandleUserLogin();
+			while (true)
+			{
+				HandleUserLogin();
 
-			if (AppInfo.CurrentProfileId.HasValue)
-			{
-				RunUserSession();
+				if (AppInfo.CurrentProfileId.HasValue)
+				{
+					RunUserSession();
+				}
+				else
+				{
+					break;
+				}
 			}
-			else
-			{
-				break;
-			}
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"\nКРИТИЧЕСКАЯ ОШИБКА: {ex.Message}");
+			Console.WriteLine("Программа будет завершена для сохранения целостности данных.");
 		}
 	}
 
@@ -55,6 +63,7 @@ internal class Program
 				case "y": LoginUser(); break;
 				case "n": CreateNewProfile(); break;
 				case "exit": AppInfo.CurrentProfileId = Guid.Empty; break;
+				case null: return;
 				default: Console.WriteLine("Неверный ввод. Попробуйте еще раз."); break;
 			}
 		}
@@ -111,9 +120,10 @@ internal class Program
 		while (true)
 		{
 			Console.Write("Введите год рождения: ");
-			if (int.TryParse(Console.ReadLine(), out birthYear) && birthYear > 1900 && birthYear <= DateTime.Now.Year)
+			string input = Console.ReadLine();
+			if (int.TryParse(input, out birthYear) && birthYear > 1900 && birthYear <= DateTime.Now.Year)
 				break;
-			Console.WriteLine("Некорректный год рождения.");
+			Console.WriteLine("Некорректный год рождения. Введите число от 1900 до текущего года.");
 		}
 
 		var newProfile = new Profile(firstName, lastName, birthYear, login, password, Guid.NewGuid());
@@ -141,20 +151,29 @@ internal class Program
 		{
 			Console.Write("> ");
 			string input = Console.ReadLine();
+
+			if (input == null) break;
 			if (string.IsNullOrWhiteSpace(input)) continue;
 
-			ICommand command = CommandParser.Parse(input);
-			command.Execute();
-
-			if (!AppInfo.CurrentProfileId.HasValue)
+			try
 			{
-				break;
+				ICommand command = CommandParser.Parse(input);
+				command.Execute();
+
+				if (!AppInfo.CurrentProfileId.HasValue)
+				{
+					break;
+				}
+
+				if (command is IUndo undoableCommand)
+				{
+					AppInfo.UndoStack.Push(undoableCommand);
+					AppInfo.RedoStack.Clear();
+				}
 			}
-
-			if (command is IUndo undoableCommand)
+			catch (Exception ex)
 			{
-				AppInfo.UndoStack.Push(undoableCommand);
-				AppInfo.RedoStack.Clear();
+				Console.WriteLine($"Ошибка при выполнении команды: {ex.Message}");
 			}
 		}
 		Console.WriteLine("Вы вышли из профиля.");
