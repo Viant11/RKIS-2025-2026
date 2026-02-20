@@ -57,7 +57,9 @@ public class AddCommand : ICommand, IUndo
 		{
 			Console.Write("> ");
 			line = Console.ReadLine();
-			if (line == "!end") break;
+
+			if (line == null || line == "!end") break;
+
 			if (!string.IsNullOrWhiteSpace(line))
 			{
 				if (!string.IsNullOrEmpty(result)) result += "\n";

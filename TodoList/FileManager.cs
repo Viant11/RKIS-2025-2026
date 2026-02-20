@@ -56,15 +56,19 @@ public static class FileManager
 				string[] parts = line.Split(';');
 				if (parts.Length == 6)
 				{
-					var profile = new Profile(
-						firstName: parts[3],
-						lastName: parts[4],
-						birthYear: int.Parse(parts[5]),
-						login: parts[1],
-						password: parts[2],
-						id: Guid.Parse(parts[0])
-					);
-					profiles.Add(profile);
+					if (Guid.TryParse(parts[0], out Guid id) &&
+						int.TryParse(parts[5], out int birthYear))
+					{
+						var profile = new Profile(
+							firstName: parts[3],
+							lastName: parts[4],
+							birthYear: birthYear,
+							login: parts[1],
+							password: parts[2],
+							id: id
+						);
+						profiles.Add(profile);
+					}
 				}
 			}
 		}
@@ -115,10 +119,17 @@ public static class FileManager
 				if (parts.Length == 4)
 				{
 					string text = parts[1].Replace("\"\"", "\"").Replace("\\n", "\n").Replace("\r", "\r");
-					Enum.TryParse<TodoStatus>(parts[2], true, out var status);
-					DateTime lastUpdate = DateTime.Parse(parts[3]);
-					var todoItem = new TodoItem(text, status, lastUpdate);
-					todoList.Add(todoItem);
+
+					if (Enum.TryParse<TodoStatus>(parts[2], true, out var status) &&
+						DateTime.TryParse(parts[3], out DateTime lastUpdate))
+					{
+						var todoItem = new TodoItem(text, status, lastUpdate);
+						todoList.Add(todoItem);
+					}
+					else
+					{
+
+					}
 				}
 			}
 		}

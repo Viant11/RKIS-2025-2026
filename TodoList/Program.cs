@@ -46,8 +46,7 @@ internal class Program
 		}
 		catch (Exception ex)
 		{
-			Console.WriteLine($"\nКРИТИЧЕСКАЯ ОШИБКА: {ex.Message}");
-			Console.WriteLine("Программа будет завершена для сохранения целостности данных.");
+			Console.WriteLine($"Критическая ошибка приложения: {ex.Message}");
 		}
 	}
 
@@ -63,7 +62,7 @@ internal class Program
 				case "y": LoginUser(); break;
 				case "n": CreateNewProfile(); break;
 				case "exit": AppInfo.CurrentProfileId = Guid.Empty; break;
-				case null: return;
+				case null: AppInfo.CurrentProfileId = Guid.Empty; break;
 				default: Console.WriteLine("Неверный ввод. Попробуйте еще раз."); break;
 			}
 		}
@@ -153,6 +152,7 @@ internal class Program
 			string input = Console.ReadLine();
 
 			if (input == null) break;
+
 			if (string.IsNullOrWhiteSpace(input)) continue;
 
 			try
@@ -173,7 +173,7 @@ internal class Program
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine($"Ошибка при выполнении команды: {ex.Message}");
+				Console.WriteLine($"Ошибка: {ex.Message}");
 			}
 		}
 		Console.WriteLine("Вы вышли из профиля.");
