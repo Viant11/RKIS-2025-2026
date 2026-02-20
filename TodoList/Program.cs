@@ -46,7 +46,7 @@ internal class Program
 		}
 		catch (Exception ex)
 		{
-			Console.WriteLine($"\nКРИТИЧЕСКАЯ ОШИБКА ПРИЛОЖЕНИЯ: {ex.Message}");
+			Console.WriteLine($"Критическая ошибка приложения: {ex.Message}");
 		}
 	}
 
@@ -75,6 +75,10 @@ internal class Program
 			catch (DuplicateLoginException ex)
 			{
 				Console.WriteLine($"Ошибка регистрации: {ex.Message}");
+			}
+			catch (InvalidArgumentException ex)
+			{
+				Console.WriteLine($"Ошибка ввода: {ex.Message}");
 			}
 			catch (Exception ex)
 			{
@@ -182,25 +186,25 @@ internal class Program
 					AppInfo.RedoStack.Clear();
 				}
 			}
+			catch (TaskNotFoundException ex)
+			{
+				Console.WriteLine($"Ошибка задачи: {ex.Message}");
+			}
+			catch (AuthenticationException ex)
+			{
+				Console.WriteLine($"Ошибка авторизации: {ex.Message}");
+			}
 			catch (InvalidCommandException ex)
 			{
-				Console.WriteLine($"ОШИБКА КОМАНДЫ: {ex.Message}");
+				Console.WriteLine($"Ошибка команды: {ex.Message}");
 			}
 			catch (InvalidArgumentException ex)
 			{
-				Console.WriteLine($"ОШИБКА АРГУМЕНТОВ: {ex.Message}");
-			}
-			catch (TaskNotFoundException ex)
-			{
-				Console.WriteLine($"ОШИБКА ПОИСКА: {ex.Message}");
-			}
-			catch (ProfileNotFoundException ex)
-			{
-				Console.WriteLine($"ОШИБКА ПРОФИЛЯ: {ex.Message}");
+				Console.WriteLine($"Ошибка аргументов: {ex.Message}");
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine($"НЕИЗВЕСТНАЯ ОШИБКА: {ex.Message}");
+				Console.WriteLine("Неожиданная ошибка.");
 			}
 		}
 		Console.WriteLine("Вы вышли из профиля.");
