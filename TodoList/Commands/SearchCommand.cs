@@ -19,11 +19,11 @@ public class SearchCommand : ICommand
 
 	public void Execute()
 	{
+		if (!AppInfo.CurrentProfileId.HasValue)
+			throw new AuthenticationException("Вы не авторизованы.");
+
 		if (AppInfo.Todos == null)
-		{
-			Console.WriteLine("Ошибка: TodoList не инициализирован");
-			return;
-		}
+			throw new InvalidOperationException("TodoList не инициализирован.");
 
 		var query = AppInfo.Todos.AsEnumerable();
 
@@ -58,6 +58,10 @@ public class SearchCommand : ICommand
 				query = IsDesc
 					? query.OrderByDescending(x => x.LastUpdate)
 					: query.OrderBy(x => x.LastUpdate);
+			}
+			else
+			{
+				throw new InvalidArgumentException($"Неверное поле сортировки: {SortBy}. Доступно: text, date.");
 			}
 		}
 

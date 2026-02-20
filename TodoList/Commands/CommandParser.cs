@@ -17,21 +17,51 @@ static class CommandParser
 		{
 			var cmd = new SearchCommand();
 
+
+			var allowedSearchKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+			{
+				"contains", "starts-with", "ends-with", "from", "to", "status", "top", "sort", "desc"
+			};
+
+			foreach (var key in data.Parameters.Keys)
+			{
+				if (!allowedSearchKeys.Contains(key))
+				{
+					throw new InvalidArgumentException($"Неизвестный параметр поиска: --{key}");
+				}
+			}
+
 			if (data.Parameters.TryGetValue("contains", out var c)) cmd.Contains = c;
 			if (data.Parameters.TryGetValue("starts-with", out var s)) cmd.StartsWith = s;
 			if (data.Parameters.TryGetValue("ends-with", out var e)) cmd.EndsWith = e;
 
-			if (data.Parameters.TryGetValue("from", out var f) && DateTime.TryParse(f, out var df))
+			if (data.Parameters.TryGetValue("from", out var f))
+			{
+				if (!DateTime.TryParse(f, out var df))
+					throw new InvalidArgumentException($"Неверный формат даты --from: '{f}'. Ожидается формат yyyy-MM-dd.");
 				cmd.FromDate = df;
+			}
 
-			if (data.Parameters.TryGetValue("to", out var t) && DateTime.TryParse(t, out var dt))
+			if (data.Parameters.TryGetValue("to", out var t))
+			{
+				if (!DateTime.TryParse(t, out var dt))
+					throw new InvalidArgumentException($"Неверный формат даты --to: '{t}'. Ожидается формат yyyy-MM-dd.");
 				cmd.ToDate = dt;
+			}
 
-			if (data.Parameters.TryGetValue("status", out var stat) && Enum.TryParse<TodoStatus>(stat, true, out var ds))
+			if (data.Parameters.TryGetValue("status", out var stat))
+			{
+				if (!Enum.TryParse<TodoStatus>(stat, true, out var ds))
+					throw new InvalidArgumentException($"Неверный статус поиска: '{stat}'.");
 				cmd.Status = ds;
+			}
 
-			if (data.Parameters.TryGetValue("top", out var top) && int.TryParse(top, out var topN))
+			if (data.Parameters.TryGetValue("top", out var top))
+			{
+				if (!int.TryParse(top, out var topN))
+					throw new InvalidArgumentException($"Параметр --top должен быть числом. Получено: '{top}'");
 				cmd.Top = topN;
+			}
 
 			if (data.Parameters.TryGetValue("sort", out var sort)) cmd.SortBy = sort;
 			if (data.Parameters.ContainsKey("desc")) cmd.IsDesc = true;
@@ -78,7 +108,7 @@ static class CommandParser
 			return handler(commandData.Argument, commandData);
 		}
 
-		return new UnknownCommand();
+		throw new InvalidCommandException($"Команда '{commandName}' не найдена. Введите 'help'.");
 	}
 
 	private static List<string> SplitCommandLine(string line)
@@ -127,6 +157,7 @@ static class CommandParser
 
 		var looseArgs = new List<string>();
 
+
 		for (int i = 1; i < parts.Count; i++)
 		{
 			string part = parts[i];
@@ -134,15 +165,27 @@ static class CommandParser
 			if (part.StartsWith("--"))
 			{
 				string key = part.Substring(2);
+
+				if (IsSearchParam(key))
+				{
+					if (i + 1 < parts.Count && !parts[i + 1].StartsWith("-"))
+					{
+						result.Parameters[key] = parts[i + 1];
+						i++;
+					}
+					else
+					{
+						result.Parameters[key] = "true";
+					}
+					continue;
+				}
+
 				if (i + 1 < parts.Count && !parts[i + 1].StartsWith("-"))
 				{
-					result.Parameters[key] = parts[i + 1];
 					HandleLegacyFlags(key, ref result);
-					i++;
 				}
 				else
 				{
-					result.Parameters[key] = "true";
 					HandleLegacyFlags(key, ref result);
 				}
 			}
@@ -164,6 +207,12 @@ static class CommandParser
 		return result;
 	}
 
+	private static bool IsSearchParam(string key)
+	{
+		var searchParams = new[] { "contains", "starts-with", "ends-with", "from", "to", "sort", "desc", "top", "status" };
+		return searchParams.Contains(key.ToLower());
+	}
+
 	private static void HandleLegacyFlags(string key, ref CommandData data)
 	{
 		switch (key.ToLower())
@@ -176,6 +225,8 @@ static class CommandParser
 			case "incomplete": data.IncompleteFlag = true; break;
 			case "statistics": data.StatisticsFlag = true; break;
 			case "out": data.LogoutFlag = true; break;
+			default:
+				throw new InvalidArgumentException($"Неизвестный флаг: --{key}");
 		}
 	}
 
@@ -191,6 +242,8 @@ static class CommandParser
 			case 'I': data.IncompleteFlag = true; break;
 			case 'S': data.StatisticsFlag = true; break;
 			case 'o': data.LogoutFlag = true; break;
+			default:
+				throw new InvalidArgumentException($"Неизвестный короткий флаг: -{flag}");
 		}
 	}
 }
