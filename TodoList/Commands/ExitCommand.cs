@@ -5,14 +5,18 @@ public class ExitCommand : ICommand
 	public void Execute()
 	{
 		Console.WriteLine("Сохранение данных перед выходом...");
-		if (AppInfo.CurrentProfileId.HasValue && AppInfo.Todos != null)
-		{
-			FileManager.SaveUserTodos(AppInfo.CurrentProfileId.Value, AppInfo.Todos, Program.DataDir);
-		}
 
-		if (AppInfo.AllProfiles != null)
+		if (AppInfo.FileManager != null)
 		{
-			FileManager.SaveProfiles(AppInfo.AllProfiles, Program.ProfileFilePath);
+			if (AppInfo.CurrentProfileId.HasValue && AppInfo.Todos != null)
+			{
+				AppInfo.FileManager.SaveUserTodos(AppInfo.CurrentProfileId.Value, AppInfo.Todos);
+			}
+
+			if (AppInfo.AllProfiles != null)
+			{
+				AppInfo.FileManager.SaveProfiles(AppInfo.AllProfiles);
+			}
 		}
 
 		Console.WriteLine("Программа завершена.");

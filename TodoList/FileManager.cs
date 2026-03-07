@@ -1,12 +1,14 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Security.Cryptography;
 
-public static class FileManager
+public class FileManager : IFileManager
 {
+	private readonly string _dataDir;
+	private readonly string _profileFilePath;
+
 	private static readonly byte[] Key = new byte[]
 	{
 		0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF,
@@ -21,29 +23,26 @@ public static class FileManager
 		0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10
 	};
 
-	public static void SaveTodoListOnChange(TodoItem item)
+	public FileManager(string dataDir, string profileFilePath)
 	{
-		if (AppInfo.CurrentProfileId.HasValue && AppInfo.Todos != null)
+		_dataDir = dataDir;
+		_profileFilePath = profileFilePath;
+	}
+
+	public void EnsureDataDirectory()
+	{
+		if (!Directory.Exists(_dataDir))
 		{
-			SaveUserTodos(AppInfo.CurrentProfileId.Value, AppInfo.Todos, Program.DataDir);
+			Directory.CreateDirectory(_dataDir);
+			Console.WriteLine($"Создана папка: {_dataDir}");
 		}
 	}
 
-	public static void EnsureDataDirectory(string dirPath)
-	{
-		if (!Directory.Exists(dirPath))
-		{
-			Directory.CreateDirectory(dirPath);
-			Console.WriteLine($"Создана папка: {dirPath}");
-		}
-	}
-
-	public static void SaveProfiles(List<Profile> profiles, string filePath)
+	public void SaveProfiles(List<Profile> profiles)
 	{
 		try
 		{
-
-			using (FileStream fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+			using (FileStream fs = new FileStream(_profileFilePath, FileMode.Create, FileAccess.Write))
 			using (BufferedStream bs = new BufferedStream(fs))
 			using (Aes aes = Aes.Create())
 			{
@@ -68,18 +67,17 @@ public static class FileManager
 		}
 	}
 
-	public static List<Profile> LoadProfiles(string filePath)
+	public List<Profile> LoadProfiles()
 	{
 		var profiles = new List<Profile>();
-		if (!File.Exists(filePath))
+		if (!File.Exists(_profileFilePath))
 		{
 			return profiles;
 		}
 
 		try
 		{
-
-			using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+			using (FileStream fs = new FileStream(_profileFilePath, FileMode.Open, FileAccess.Read))
 			using (BufferedStream bs = new BufferedStream(fs))
 			using (Aes aes = Aes.Create())
 			{
@@ -127,9 +125,9 @@ public static class FileManager
 		return profiles;
 	}
 
-	public static void SaveUserTodos(Guid userId, TodoList todos, string dataDir)
+	public void SaveUserTodos(Guid userId, TodoList todos)
 	{
-		string filePath = Path.Combine(dataDir, $"todos_{userId}.csv");
+		string filePath = Path.Combine(_dataDir, $"todos_{userId}.csv");
 		try
 		{
 			using (FileStream fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
@@ -160,9 +158,9 @@ public static class FileManager
 		}
 	}
 
-	public static TodoList LoadUserTodos(Guid userId, string dataDir)
+	public TodoList LoadUserTodos(Guid userId)
 	{
-		string filePath = Path.Combine(dataDir, $"todos_{userId}.csv");
+		string filePath = Path.Combine(_dataDir, $"todos_{userId}.csv");
 		var todoList = new TodoList();
 		if (!File.Exists(filePath))
 		{
@@ -214,7 +212,7 @@ public static class FileManager
 		return todoList;
 	}
 
-	private static string[] ParseCsvLine(string line, char separator = ';')
+	private string[] ParseCsvLine(string line, char separator = ';')
 	{
 		var parts = new List<string>();
 		var currentPart = new StringBuilder();
