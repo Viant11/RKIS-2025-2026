@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-static class CommandParser
+public static class CommandParser
 {
 	private static Dictionary<string, Func<string, CommandData, ICommand>> _commandHandlers = new();
 

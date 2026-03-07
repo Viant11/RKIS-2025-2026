@@ -1,34 +1,57 @@
 ﻿using Xunit;
 using System;
 
-namespace TodoList.Tests
+namespace ProjectTests
 {
 	public class TodoItemTests
 	{
 		[Fact]
-		public void Constructor_ShouldSetDefaultValues()
+		public void GetShortInfo_ShouldTruncateLongText()
 		{
-			string expectedText = "Купить хлеб";
+			string longText = "Это очень очень очень очень очень очень длинная задача";
+			var item = new TodoItem(longText);
 
-			var item = new TodoItem(expectedText);
+			string shortInfo = item.GetShortInfo();
 
-			Assert.Equal(expectedText, item.Text);
-			Assert.Equal(TodoStatus.NotStarted, item.Status);
-			Assert.True(item.LastUpdate <= DateTime.Now);
+			Assert.Contains("Это очень очень очень очень...", shortInfo);
 		}
 
 		[Fact]
-		public void UpdateStatus_ShouldChangeStatusAndDate()
+		public void GetShortInfo_ShouldReplaceNewLines()
 		{
-			var item = new TodoItem("Test task");
-			var oldDate = item.LastUpdate;
+			string multilineText = "Строка1\nСтрока2";
+			var item = new TodoItem(multilineText);
 
-			System.Threading.Thread.Sleep(10);
+			string shortInfo = item.GetShortInfo();
 
-			item.UpdateStatus(TodoStatus.InProgress);
+			Assert.DoesNotContain("\n", shortInfo);
+			Assert.Contains("Строка1 Строка2", shortInfo);
+		}
 
-			Assert.Equal(TodoStatus.InProgress, item.Status);
-			Assert.NotEqual(oldDate, item.LastUpdate);
+		[Fact]
+		public void UpdateText_ShouldUpdateTextAndTimestamp()
+		{
+			var item = new TodoItem("Old Text");
+			DateTime oldTime = item.LastUpdate;
+
+			System.Threading.Thread.Sleep(50);
+
+			item.UpdateText("New Text");
+
+			Assert.Equal("New Text", item.Text);
+			Assert.True(item.LastUpdate > oldTime);
+		}
+
+		[Fact]
+		public void GetFullInfo_ShouldContainStatusText()
+		{
+			var item = new TodoItem("Task");
+			item.UpdateStatus(TodoStatus.Completed);
+
+			string fullInfo = item.GetFullInfo();
+
+			Assert.Contains("Выполнено", fullInfo);
+			Assert.Contains("Task", fullInfo);
 		}
 	}
 }
