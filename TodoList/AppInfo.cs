@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 public static class AppInfo
 {
-	public static IFileManager FileManager { get; set; }
+	public static IDataStorage Storage { get; set; }
 
 	public static TodoList Todos { get; set; }
 	public static List<Profile> AllProfiles { get; set; }

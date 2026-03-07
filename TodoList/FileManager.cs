@@ -1,10 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Security.Cryptography;
 
-public class FileManager : IFileManager
+public class FileManager : IDataStorage
 {
 	private readonly string _dataDir;
 	private readonly string _profileFilePath;
@@ -38,7 +39,7 @@ public class FileManager : IFileManager
 		}
 	}
 
-	public void SaveProfiles(List<Profile> profiles)
+	public void SaveProfiles(IEnumerable<Profile> profiles)
 	{
 		try
 		{
@@ -67,7 +68,7 @@ public class FileManager : IFileManager
 		}
 	}
 
-	public List<Profile> LoadProfiles()
+	public IEnumerable<Profile> LoadProfiles()
 	{
 		var profiles = new List<Profile>();
 		if (!File.Exists(_profileFilePath))
@@ -116,7 +117,7 @@ public class FileManager : IFileManager
 		}
 		catch (CryptographicException)
 		{
-			Console.WriteLine("Ошибка: Не удалось расшифровать файл профилей. Возможно, ключ изменился или файл поврежден.");
+			Console.WriteLine("Ошибка: Не удалось расшифровать файл профилей.");
 		}
 		catch (Exception ex)
 		{
@@ -125,7 +126,7 @@ public class FileManager : IFileManager
 		return profiles;
 	}
 
-	public void SaveUserTodos(Guid userId, TodoList todos)
+	public void SaveTodos(Guid userId, IEnumerable<TodoItem> todos)
 	{
 		string filePath = Path.Combine(_dataDir, $"todos_{userId}.csv");
 		try
@@ -141,13 +142,13 @@ public class FileManager : IFileManager
 				using (CryptoStream cs = new CryptoStream(bs, encryptor, CryptoStreamMode.Write))
 				using (StreamWriter sw = new StreamWriter(cs, Encoding.UTF8))
 				{
-					for (int i = 0; i < todos.Count; i++)
+					int i = 0;
+					foreach (var item in todos)
 					{
-						var item = todos[i];
 						string escapedText = item.Text.Replace("\"", "\"\"").Replace("\n", "\\n").Replace("\r", "\\r");
 						string line = $"{i};\"{escapedText}\";{item.Status.ToString()};{item.LastUpdate:yyyy-MM-dd HH:mm:ss}";
-
 						sw.WriteLine(line);
+						i++;
 					}
 				}
 			}
@@ -158,13 +159,14 @@ public class FileManager : IFileManager
 		}
 	}
 
-	public TodoList LoadUserTodos(Guid userId)
+	public IEnumerable<TodoItem> LoadTodos(Guid userId)
 	{
 		string filePath = Path.Combine(_dataDir, $"todos_{userId}.csv");
-		var todoList = new TodoList();
+		var list = new List<TodoItem>();
+
 		if (!File.Exists(filePath))
 		{
-			return todoList;
+			return list;
 		}
 
 		try
@@ -194,7 +196,7 @@ public class FileManager : IFileManager
 								DateTime.TryParse(parts[3], out DateTime lastUpdate))
 							{
 								var todoItem = new TodoItem(text, status, lastUpdate);
-								todoList.Add(todoItem);
+								list.Add(todoItem);
 							}
 						}
 					}
@@ -203,13 +205,13 @@ public class FileManager : IFileManager
 		}
 		catch (CryptographicException)
 		{
-			Console.WriteLine($"Ошибка: Файл задач пользователя {userId} не может быть расшифрован (неверный формат или ключ).");
+			Console.WriteLine($"Ошибка дешифровки задач пользователя {userId}.");
 		}
 		catch (Exception ex)
 		{
 			Console.WriteLine($"Ошибка загрузки задач для пользователя {userId}: {ex.Message}");
 		}
-		return todoList;
+		return list;
 	}
 
 	private string[] ParseCsvLine(string line, char separator = ';')

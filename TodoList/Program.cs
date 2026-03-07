@@ -22,12 +22,13 @@ internal class Program
 		DataDir = "data";
 		ProfileFilePath = Path.Combine(DataDir, "profile.csv");
 
-		IFileManager fileManager = new FileManager(DataDir, ProfileFilePath);
-		AppInfo.FileManager = fileManager;
+		FileManager fileManager = new FileManager(DataDir, ProfileFilePath);
 
 		fileManager.EnsureDataDirectory();
 
-		AppInfo.AllProfiles = fileManager.LoadProfiles();
+		AppInfo.Storage = fileManager;
+
+		AppInfo.AllProfiles = AppInfo.Storage.LoadProfiles().ToList();
 
 		AppInfo.UndoStack = new Stack<IUndo>();
 		AppInfo.RedoStack = new Stack<IUndo>();
@@ -36,7 +37,7 @@ internal class Program
 		{
 			while (true)
 			{
-				HandleUserLogin(fileManager);
+				HandleUserLogin();
 
 				if (AppInfo.CurrentProfileId.HasValue)
 				{
@@ -54,7 +55,7 @@ internal class Program
 		}
 	}
 
-	private static void HandleUserLogin(IFileManager fileManager)
+	private static void HandleUserLogin()
 	{
 		while (AppInfo.CurrentProfileId == null)
 		{
@@ -65,8 +66,8 @@ internal class Program
 			{
 				switch (choice)
 				{
-					case "y": LoginUser(fileManager); break;
-					case "n": CreateNewProfile(fileManager); break;
+					case "y": LoginUser(); break;
+					case "n": CreateNewProfile(); break;
 					case "exit": AppInfo.CurrentProfileId = Guid.Empty; break;
 					case null: AppInfo.CurrentProfileId = Guid.Empty; break;
 					default: Console.WriteLine("Неверный ввод. Попробуйте еще раз."); break;
@@ -96,11 +97,11 @@ internal class Program
 	{
 		if (AppInfo.CurrentProfileId.HasValue && AppInfo.Todos != null)
 		{
-			AppInfo.FileManager.SaveUserTodos(AppInfo.CurrentProfileId.Value, AppInfo.Todos);
+			AppInfo.Storage.SaveTodos(AppInfo.CurrentProfileId.Value, AppInfo.Todos);
 		}
 	}
 
-	private static void LoginUser(IFileManager fileManager)
+	private static void LoginUser()
 	{
 		Console.Write("Введите логин: ");
 		string login = Console.ReadLine();
@@ -116,7 +117,9 @@ internal class Program
 
 		AppInfo.CurrentProfileId = foundProfile.Id;
 
-		var userTodos = fileManager.LoadUserTodos(foundProfile.Id);
+		var loadedTasks = AppInfo.Storage.LoadTodos(foundProfile.Id);
+
+		var userTodos = new TodoList(loadedTasks.ToList());
 
 		userTodos.OnTodoAdded += OnTodoChanged;
 		userTodos.OnTodoDeleted += OnTodoChanged;
@@ -130,7 +133,7 @@ internal class Program
 		Console.WriteLine($"Добро пожаловать, {foundProfile.FirstName}!");
 	}
 
-	private static void CreateNewProfile(IFileManager fileManager)
+	private static void CreateNewProfile()
 	{
 		Console.Write("Введите новый логин: ");
 		string login = Console.ReadLine();
@@ -163,7 +166,7 @@ internal class Program
 		var newProfile = new Profile(firstName, lastName, birthYear, login, password, Guid.NewGuid());
 		AppInfo.AllProfiles.Add(newProfile);
 
-		fileManager.SaveProfiles(AppInfo.AllProfiles);
+		AppInfo.Storage.SaveProfiles(AppInfo.AllProfiles);
 
 		AppInfo.CurrentProfileId = newProfile.Id;
 		var newUserTodos = new TodoList();
@@ -175,7 +178,7 @@ internal class Program
 
 		AppInfo.Todos = newUserTodos;
 
-		fileManager.SaveUserTodos(newProfile.Id, AppInfo.Todos);
+		AppInfo.Storage.SaveTodos(newProfile.Id, AppInfo.Todos);
 
 		AppInfo.UndoStack.Clear();
 		AppInfo.RedoStack.Clear();
