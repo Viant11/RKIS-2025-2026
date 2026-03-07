@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Security.Cryptography;
 
@@ -32,26 +31,38 @@ public class FileManager : IDataStorage
 
 	public void EnsureDataDirectory()
 	{
-		if (!Directory.Exists(_dataDir))
+		try
 		{
-			Directory.CreateDirectory(_dataDir);
-			Console.WriteLine($"Создана папка: {_dataDir}");
+			if (!Directory.Exists(_dataDir))
+			{
+				Directory.CreateDirectory(_dataDir);
+				Console.WriteLine($"Создана папка данных: {_dataDir}");
+			}
+		}
+		catch (UnauthorizedAccessException ex)
+		{
+			throw new FileSystemException($"Нет прав на создание папки: {_dataDir}", _dataDir, ex);
+		}
+		catch (IOException ex)
+		{
+			throw new FileSystemException($"Ошибка ввода-вывода при создании папки: {_dataDir}", _dataDir, ex);
 		}
 	}
 
 	public void SaveProfiles(IEnumerable<Profile> profiles)
 	{
+		string tempPath = _profileFilePath + ".tmp";
+
 		try
 		{
-			using (FileStream fs = new FileStream(_profileFilePath, FileMode.Create, FileAccess.Write))
-			using (BufferedStream bs = new BufferedStream(fs))
+			using (FileStream fs = new FileStream(tempPath, FileMode.Create, FileAccess.Write))
 			using (Aes aes = Aes.Create())
 			{
 				aes.Key = Key;
 				aes.IV = IV;
 
 				using (ICryptoTransform encryptor = aes.CreateEncryptor())
-				using (CryptoStream cs = new CryptoStream(bs, encryptor, CryptoStreamMode.Write))
+				using (CryptoStream cs = new CryptoStream(fs, encryptor, CryptoStreamMode.Write))
 				using (StreamWriter sw = new StreamWriter(cs, Encoding.UTF8))
 				{
 					foreach (var p in profiles)
@@ -61,10 +72,30 @@ public class FileManager : IDataStorage
 					}
 				}
 			}
+
+			if (File.Exists(_profileFilePath))
+				File.Delete(_profileFilePath);
+
+			File.Move(tempPath, _profileFilePath);
+		}
+		catch (UnauthorizedAccessException ex)
+		{
+			throw new FileSystemException("Нет прав на запись файла профилей.", _profileFilePath, ex);
+		}
+		catch (IOException ex)
+		{
+			throw new FileSystemException("Ошибка доступа к файлу при сохранении профилей.", _profileFilePath, ex);
 		}
 		catch (Exception ex)
 		{
-			Console.WriteLine($"Ошибка сохранения профилей: {ex.Message}");
+			throw new StorageException("Неизвестная ошибка при сохранении профилей.", ex);
+		}
+		finally
+		{
+			if (File.Exists(tempPath))
+			{
+				try { File.Delete(tempPath); } catch { }
+			}
 		}
 	}
 
@@ -79,49 +110,62 @@ public class FileManager : IDataStorage
 		try
 		{
 			using (FileStream fs = new FileStream(_profileFilePath, FileMode.Open, FileAccess.Read))
-			using (BufferedStream bs = new BufferedStream(fs))
 			using (Aes aes = Aes.Create())
 			{
 				aes.Key = Key;
 				aes.IV = IV;
 
 				using (ICryptoTransform decryptor = aes.CreateDecryptor())
-				using (CryptoStream cs = new CryptoStream(bs, decryptor, CryptoStreamMode.Read))
+				using (CryptoStream cs = new CryptoStream(fs, decryptor, CryptoStreamMode.Read))
 				using (StreamReader sr = new StreamReader(cs, Encoding.UTF8))
 				{
 					string line;
+					int lineNumber = 0;
 					while ((line = sr.ReadLine()) != null)
 					{
+						lineNumber++;
 						if (string.IsNullOrWhiteSpace(line)) continue;
 
 						string[] parts = line.Split(';');
-						if (parts.Length == 6)
+						if (parts.Length != 6)
 						{
-							if (Guid.TryParse(parts[0], out Guid id) &&
-								int.TryParse(parts[5], out int birthYear))
-							{
-								var profile = new Profile(
-									firstName: parts[3],
-									lastName: parts[4],
-									birthYear: birthYear,
-									login: parts[1],
-									password: parts[2],
-									id: id
-								);
-								profiles.Add(profile);
-							}
+							throw new DataCorruptionException($"Неверный формат данных профиля в строке {lineNumber}.");
 						}
+
+						if (!Guid.TryParse(parts[0], out Guid id))
+							throw new DataCorruptionException($"Ошибка парсинга ID профиля в строке {lineNumber}.");
+
+						if (!int.TryParse(parts[5], out int birthYear))
+							throw new DataCorruptionException($"Ошибка парсинга года рождения в строке {lineNumber}.");
+
+						var profile = new Profile(
+							firstName: parts[3],
+							lastName: parts[4],
+							birthYear: birthYear,
+							login: parts[1],
+							password: parts[2],
+							id: id
+						);
+						profiles.Add(profile);
 					}
 				}
 			}
 		}
-		catch (CryptographicException)
+		catch (CryptographicException ex)
 		{
-			Console.WriteLine("Ошибка: Не удалось расшифровать файл профилей.");
+			throw new SecurityStorageException("Ошибка расшифровки файла профилей. Возможно, файл поврежден или изменен ключ.", ex);
+		}
+		catch (IOException ex)
+		{
+			throw new FileSystemException("Ошибка чтения файла профилей.", _profileFilePath, ex);
+		}
+		catch (DataCorruptionException)
+		{
+			throw;
 		}
 		catch (Exception ex)
 		{
-			Console.WriteLine($"Ошибка загрузки профилей: {ex.Message}");
+			throw new StorageException("Критическая ошибка при загрузке профилей.", ex);
 		}
 		return profiles;
 	}
@@ -129,33 +173,46 @@ public class FileManager : IDataStorage
 	public void SaveTodos(Guid userId, IEnumerable<TodoItem> todos)
 	{
 		string filePath = Path.Combine(_dataDir, $"todos_{userId}.csv");
+		string tempPath = filePath + ".tmp";
+
 		try
 		{
-			using (FileStream fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
-			using (BufferedStream bs = new BufferedStream(fs))
+			using (FileStream fs = new FileStream(tempPath, FileMode.Create, FileAccess.Write))
 			using (Aes aes = Aes.Create())
 			{
 				aes.Key = Key;
 				aes.IV = IV;
 
 				using (ICryptoTransform encryptor = aes.CreateEncryptor())
-				using (CryptoStream cs = new CryptoStream(bs, encryptor, CryptoStreamMode.Write))
+				using (CryptoStream cs = new CryptoStream(fs, encryptor, CryptoStreamMode.Write))
 				using (StreamWriter sw = new StreamWriter(cs, Encoding.UTF8))
 				{
 					int i = 0;
 					foreach (var item in todos)
 					{
 						string escapedText = item.Text.Replace("\"", "\"\"").Replace("\n", "\\n").Replace("\r", "\\r");
-						string line = $"{i};\"{escapedText}\";{item.Status.ToString()};{item.LastUpdate:yyyy-MM-dd HH:mm:ss}";
+						string line = $"{i};\"{escapedText}\";{item.Status};{item.LastUpdate:yyyy-MM-dd HH:mm:ss}";
 						sw.WriteLine(line);
 						i++;
 					}
 				}
 			}
+
+			if (File.Exists(filePath))
+				File.Delete(filePath);
+			File.Move(tempPath, filePath);
+		}
+		catch (IOException ex)
+		{
+			throw new FileSystemException($"Ошибка сохранения задач пользователя {userId}.", filePath, ex);
 		}
 		catch (Exception ex)
 		{
-			Console.WriteLine($"Ошибка сохранения задач для пользователя {userId}: {ex.Message}");
+			throw new StorageException($"Неизвестная ошибка сохранения задач пользователя {userId}.", ex);
+		}
+		finally
+		{
+			if (File.Exists(tempPath)) try { File.Delete(tempPath); } catch { }
 		}
 	}
 
@@ -172,45 +229,55 @@ public class FileManager : IDataStorage
 		try
 		{
 			using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-			using (BufferedStream bs = new BufferedStream(fs))
 			using (Aes aes = Aes.Create())
 			{
 				aes.Key = Key;
 				aes.IV = IV;
 
 				using (ICryptoTransform decryptor = aes.CreateDecryptor())
-				using (CryptoStream cs = new CryptoStream(bs, decryptor, CryptoStreamMode.Read))
+				using (CryptoStream cs = new CryptoStream(fs, decryptor, CryptoStreamMode.Read))
 				using (StreamReader sr = new StreamReader(cs, Encoding.UTF8))
 				{
 					string line;
+					int lineNumber = 0;
 					while ((line = sr.ReadLine()) != null)
 					{
+						lineNumber++;
 						if (string.IsNullOrWhiteSpace(line)) continue;
 
 						string[] parts = ParseCsvLine(line, ';');
-						if (parts.Length == 4)
+						if (parts.Length < 4)
 						{
-							string text = parts[1].Replace("\"\"", "\"").Replace("\\n", "\n").Replace("\\r", "\r");
-
-							if (Enum.TryParse<TodoStatus>(parts[2], true, out var status) &&
-								DateTime.TryParse(parts[3], out DateTime lastUpdate))
-							{
-								var todoItem = new TodoItem(text, status, lastUpdate);
-								list.Add(todoItem);
-							}
+							throw new DataCorruptionException($"Неверный формат строки задачи #{lineNumber} у пользователя {userId}.");
 						}
+
+						string text = parts[1].Replace("\"\"", "\"").Replace("\\n", "\n").Replace("\\r", "\r");
+
+						if (!Enum.TryParse<TodoStatus>(parts[2], true, out var status))
+							throw new DataCorruptionException($"Неизвестный статус задачи в строке {lineNumber}: {parts[2]}");
+
+						if (!DateTime.TryParse(parts[3], out DateTime lastUpdate))
+							throw new DataCorruptionException($"Неверный формат даты в строке {lineNumber}: {parts[3]}");
+
+						var todoItem = new TodoItem(text, status, lastUpdate);
+						list.Add(todoItem);
 					}
 				}
 			}
 		}
-		catch (CryptographicException)
+		catch (CryptographicException ex)
 		{
-			Console.WriteLine($"Ошибка дешифровки задач пользователя {userId}.");
+			throw new SecurityStorageException($"Файл задач пользователя {userId} не может быть расшифрован.", ex);
 		}
-		catch (Exception ex)
+		catch (IOException ex)
 		{
-			Console.WriteLine($"Ошибка загрузки задач для пользователя {userId}: {ex.Message}");
+			throw new FileSystemException($"Ошибка доступа к файлу задач {userId}.", filePath, ex);
 		}
+		catch (Exception ex) when (!(ex is StorageException))
+		{
+			throw new StorageException($"Ошибка загрузки задач {userId}.", ex);
+		}
+
 		return list;
 	}
 

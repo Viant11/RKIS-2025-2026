@@ -23,12 +23,38 @@ internal class Program
 		ProfileFilePath = Path.Combine(DataDir, "profile.csv");
 
 		FileManager fileManager = new FileManager(DataDir, ProfileFilePath);
-
-		fileManager.EnsureDataDirectory();
-
 		AppInfo.Storage = fileManager;
 
-		AppInfo.AllProfiles = AppInfo.Storage.LoadProfiles().ToList();
+		try
+		{
+			fileManager.EnsureDataDirectory();
+
+			AppInfo.AllProfiles = AppInfo.Storage.LoadProfiles().ToList();
+		}
+		catch (SecurityStorageException)
+		{
+			Console.WriteLine("КРИТИЧЕСКАЯ ОШИБКА: Не удалось расшифровать файл профилей.");
+			Console.WriteLine("Возможно, ключ шифрования был изменен или файл поврежден.");
+			Console.WriteLine("Приложение будет завершено.");
+			return;
+		}
+		catch (DataCorruptionException ex)
+		{
+			Console.WriteLine($"КРИТИЧЕСКАЯ ОШИБКА: Файл профилей поврежден. {ex.Message}");
+			Console.WriteLine("Исправьте файл вручную или удалите его для сброса.");
+			return;
+		}
+		catch (FileSystemException ex)
+		{
+			Console.WriteLine($"КРИТИЧЕСКАЯ ОШИБКА ДОСТУПА: {ex.Message}");
+			Console.WriteLine($"Путь: {ex.FilePath}");
+			return;
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Неожиданная ошибка при запуске: {ex.Message}");
+			return;
+		}
 
 		AppInfo.UndoStack = new Stack<IUndo>();
 		AppInfo.RedoStack = new Stack<IUndo>();
@@ -97,7 +123,14 @@ internal class Program
 	{
 		if (AppInfo.CurrentProfileId.HasValue && AppInfo.Todos != null)
 		{
-			AppInfo.Storage.SaveTodos(AppInfo.CurrentProfileId.Value, AppInfo.Todos);
+			try
+			{
+				AppInfo.Storage.SaveTodos(AppInfo.CurrentProfileId.Value, AppInfo.Todos);
+			}
+			catch (StorageException ex)
+			{
+				Console.WriteLine($"\n[ВНИМАНИЕ] Ошибка автосохранения: {ex.Message}");
+			}
 		}
 	}
 
@@ -115,22 +148,35 @@ internal class Program
 			throw new AuthenticationException("Неверный логин или пароль.");
 		}
 
-		AppInfo.CurrentProfileId = foundProfile.Id;
+		try
+		{
+			var loadedTasks = AppInfo.Storage.LoadTodos(foundProfile.Id);
+			var userTodos = new TodoList(loadedTasks.ToList());
 
-		var loadedTasks = AppInfo.Storage.LoadTodos(foundProfile.Id);
+			userTodos.OnTodoAdded += OnTodoChanged;
+			userTodos.OnTodoDeleted += OnTodoChanged;
+			userTodos.OnTodoUpdated += OnTodoChanged;
+			userTodos.OnStatusChanged += OnTodoChanged;
 
-		var userTodos = new TodoList(loadedTasks.ToList());
+			AppInfo.Todos = userTodos;
+			AppInfo.CurrentProfileId = foundProfile.Id;
 
-		userTodos.OnTodoAdded += OnTodoChanged;
-		userTodos.OnTodoDeleted += OnTodoChanged;
-		userTodos.OnTodoUpdated += OnTodoChanged;
-		userTodos.OnStatusChanged += OnTodoChanged;
-
-		AppInfo.Todos = userTodos;
-
-		AppInfo.UndoStack.Clear();
-		AppInfo.RedoStack.Clear();
-		Console.WriteLine($"Добро пожаловать, {foundProfile.FirstName}!");
+			AppInfo.UndoStack.Clear();
+			AppInfo.RedoStack.Clear();
+			Console.WriteLine($"Добро пожаловать, {foundProfile.FirstName}!");
+		}
+		catch (SecurityStorageException)
+		{
+			Console.WriteLine("Ошибка: Не удалось расшифровать список задач. Возможно, файл поврежден.");
+		}
+		catch (DataCorruptionException ex)
+		{
+			Console.WriteLine($"Ошибка: Файл задач поврежден. {ex.Message}");
+		}
+		catch (StorageException ex)
+		{
+			Console.WriteLine($"Ошибка хранилища: {ex.Message}");
+		}
 	}
 
 	private static void CreateNewProfile()
@@ -164,25 +210,35 @@ internal class Program
 		}
 
 		var newProfile = new Profile(firstName, lastName, birthYear, login, password, Guid.NewGuid());
-		AppInfo.AllProfiles.Add(newProfile);
 
-		AppInfo.Storage.SaveProfiles(AppInfo.AllProfiles);
+		try
+		{
+			AppInfo.AllProfiles.Add(newProfile);
+			AppInfo.Storage.SaveProfiles(AppInfo.AllProfiles);
 
-		AppInfo.CurrentProfileId = newProfile.Id;
-		var newUserTodos = new TodoList();
+			AppInfo.CurrentProfileId = newProfile.Id;
+			var newUserTodos = new TodoList();
 
-		newUserTodos.OnTodoAdded += OnTodoChanged;
-		newUserTodos.OnTodoDeleted += OnTodoChanged;
-		newUserTodos.OnTodoUpdated += OnTodoChanged;
-		newUserTodos.OnStatusChanged += OnTodoChanged;
+			newUserTodos.OnTodoAdded += OnTodoChanged;
+			newUserTodos.OnTodoDeleted += OnTodoChanged;
+			newUserTodos.OnTodoUpdated += OnTodoChanged;
+			newUserTodos.OnStatusChanged += OnTodoChanged;
 
-		AppInfo.Todos = newUserTodos;
+			AppInfo.Todos = newUserTodos;
 
-		AppInfo.Storage.SaveTodos(newProfile.Id, AppInfo.Todos);
+			AppInfo.Storage.SaveTodos(newProfile.Id, AppInfo.Todos);
 
-		AppInfo.UndoStack.Clear();
-		AppInfo.RedoStack.Clear();
-		Console.WriteLine("Новый профиль успешно создан!");
+			AppInfo.UndoStack.Clear();
+			AppInfo.RedoStack.Clear();
+			Console.WriteLine("Новый профиль успешно создан!");
+		}
+		catch (StorageException ex)
+		{
+			AppInfo.AllProfiles.Remove(newProfile);
+			AppInfo.CurrentProfileId = null;
+			AppInfo.Todos = null;
+			Console.WriteLine($"Ошибка при создании профиля (запись на диск): {ex.Message}");
+		}
 	}
 
 	private static void RunUserSession()
