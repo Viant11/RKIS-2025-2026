@@ -93,7 +93,7 @@ IP, DNS, URI, URL, TCP, UDP, HTTP, REST API, JSON, Сокеты,
 
 ### Темы:
 
-—
+SQLite, Провайдеры БД, ADO.NET, Connected Mode, Disconnected Mode, Транзакции, ACID, Repository
 
 ---
 
@@ -219,7 +219,7 @@ Unit-тесты, xUnit, Создание тестового проекта, Об
 
 ### Темы:
 
-—
+Mock, Stub, Fake, `Moq`, `Setup`, `Returns`, `Verify`
 
 ### Дедлайн
 
@@ -231,7 +231,7 @@ Unit-тесты, xUnit, Создание тестового проекта, Об
 
 ### Темы:
 
-—
+Test-Driven Development, Цикл Red-Green-Refactor
 
 ---
 
