@@ -92,8 +92,24 @@ public static class CommandParser
 		_commandHandlers["undo"] = (args, data) => new UndoCommand();
 		_commandHandlers["redo"] = (args, data) => new RedoCommand();
 		_commandHandlers["exit"] = (args, data) => new ExitCommand();
-
 		_commandHandlers["load"] = (args, data) => new LoadCommand { Argument = args };
+
+		_commandHandlers["sync"] = (args, data) =>
+		{
+			var cmd = new SyncCommand();
+
+			if (data.Parameters.ContainsKey("pull"))
+				cmd.Pull = true;
+			if (data.Parameters.ContainsKey("push"))
+				cmd.Push = true;
+
+			if (cmd.Push && cmd.Pull)
+			{
+				throw new InvalidArgumentException("Нельзя использовать --pull и --push одновременно");
+			}
+
+			return cmd;
+		};
 	}
 
 	public static ICommand Parse(string inputString)
@@ -166,7 +182,7 @@ public static class CommandParser
 			{
 				string key = part.Substring(2);
 
-				if (IsSearchParam(key))
+				if (IsSearchParam(key) || IsSyncParam(key))
 				{
 					if (i + 1 < parts.Count && !parts[i + 1].StartsWith("-"))
 					{
@@ -206,6 +222,12 @@ public static class CommandParser
 		return searchParams.Contains(key.ToLower());
 	}
 
+	private static bool IsSyncParam(string key)
+	{
+		var syncParams = new[] { "pull", "push" };
+		return syncParams.Contains(key.ToLower());
+	}
+
 	private static void HandleLegacyFlags(string key, ref CommandData data)
 	{
 		switch (key.ToLower())
@@ -218,6 +240,8 @@ public static class CommandParser
 			case "incomplete": data.IncompleteFlag = true; break;
 			case "statistics": data.StatisticsFlag = true; break;
 			case "out": data.LogoutFlag = true; break;
+			case "pull": data.Parameters["pull"] = "true"; break;
+			case "push": data.Parameters["push"] = "true"; break;
 			default:
 				throw new InvalidArgumentException($"Неизвестный флаг: --{key}");
 		}
@@ -235,6 +259,8 @@ public static class CommandParser
 			case 'I': data.IncompleteFlag = true; break;
 			case 'S': data.StatisticsFlag = true; break;
 			case 'o': data.LogoutFlag = true; break;
+			case 'p': data.Parameters["pull"] = "true"; break;
+			case 'P': data.Parameters["push"] = "true"; break;
 			default:
 				throw new InvalidArgumentException($"Неизвестный короткий флаг: -{flag}");
 		}
