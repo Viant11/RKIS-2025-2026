@@ -14,7 +14,7 @@ namespace TodoList.Server
 		static async Task Main(string[] args)
 		{
 			Console.WriteLine("TodoList Server v1.0");
-			Console.WriteLine("Сервер запускается...");
+			Console.WriteLine("РЎРµСЂРІРµСЂ Р·Р°РїСѓСЃРєР°РµС‚СЃСЏ...");
 
 			if (!Directory.Exists(DataDir))
 			{
@@ -25,12 +25,12 @@ namespace TodoList.Server
 			listener.Prefixes.Add("http://localhost:5000/");
 			listener.Start();
 
-			Console.WriteLine("Сервер запущен на http://localhost:5000/");
-			Console.WriteLine("Нажмите Ctrl+C для остановки");
+			Console.WriteLine("РЎРµСЂРІРµСЂ Р·Р°РїСѓС‰РµРЅ РЅР° http://localhost:5000/");
+			Console.WriteLine("РќР°Р¶РјРёС‚Рµ Ctrl+C РґР»СЏ РѕСЃС‚Р°РЅРѕРІРєРё");
 
 			Console.CancelKeyPress += (sender, e) =>
 			{
-				Console.WriteLine("\nОстановка сервера...");
+				Console.WriteLine("\nР—Р°РІРµСЂС€РµРЅРёРµ СЂР°Р±РѕС‚С‹...");
 				listener.Stop();
 				Environment.Exit(0);
 			};
@@ -48,7 +48,7 @@ namespace TodoList.Server
 				}
 				catch (Exception ex)
 				{
-					Console.WriteLine($"Ошибка: {ex.Message}");
+					Console.WriteLine($"РћС€РёР±РєР°: {ex.Message}");
 				}
 			}
 		}
@@ -95,7 +95,7 @@ namespace TodoList.Server
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine($"Ошибка обработки запроса: {ex.Message}");
+				Console.WriteLine($"РћС€РёР±РєР° РѕР±СЂР°Р±РѕС‚РєРё Р·Р°РїСЂРѕСЃР°: {ex.Message}");
 				response.StatusCode = (int)HttpStatusCode.InternalServerError;
 				await WriteResponse(response, "Internal Server Error");
 			}
