@@ -1,5 +1,6 @@
 ﻿using Xunit;
 using System;
+using TodoList.Models;
 
 namespace ProjectTests
 {
@@ -9,7 +10,6 @@ namespace ProjectTests
 		public void Constructor_ShouldInitializePropertiesCorrectly()
 		{
 			// Arrange
-			Guid id = Guid.NewGuid();
 			string first = "Ivan";
 			string last = "Ivanov";
 			int year = 1990;
@@ -17,10 +17,16 @@ namespace ProjectTests
 			string pass = "secret";
 
 			// Act
-			var profile = new Profile(first, last, year, login, pass, id);
+			var profile = new Profile
+			{
+				FirstName = first,
+				LastName = last,
+				BirthYear = year,
+				Login = login,
+				Password = pass
+			};
 
 			// Assert
-			Assert.Equal(id, profile.Id);
 			Assert.Equal(first, profile.FirstName);
 			Assert.Equal(last, profile.LastName);
 			Assert.Equal(year, profile.BirthYear);
@@ -33,7 +39,14 @@ namespace ProjectTests
 		{
 			// Arrange
 			int birthYear = 2000;
-			var profile = new Profile("Test", "User", birthYear, "login", "pass", Guid.NewGuid());
+			var profile = new Profile
+			{
+				FirstName = "Test",
+				LastName = "User",
+				BirthYear = birthYear,
+				Login = "login",
+				Password = "pass"
+			};
 
 			int currentYear = DateTime.Now.Year;
 			int expectedAge = currentYear - birthYear;

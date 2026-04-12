@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using TodoList.Models;
+using TodoList.Exceptions;
+
+namespace TodoList.Commands;
 
 public class SyncCommand : ICommand
 {
@@ -11,11 +15,11 @@ public class SyncCommand : ICommand
 	{
 		if (!AppInfo.CurrentProfileId.HasValue)
 		{
-			throw new AuthenticationException("Вы не авторизованы для выполнения синхронизации.");
+			Console.WriteLine("Ошибка: Вы не авторизованы для выполнения синхронизации.");
+			return;
 		}
 
-		var syncTask = ExecuteAsync();
-		syncTask.Wait();
+		ExecuteAsync().GetAwaiter().GetResult();
 	}
 
 	private async Task ExecuteAsync()
@@ -36,10 +40,6 @@ public class SyncCommand : ICommand
 			if (Push)
 			{
 				await PushToServer(apiStorage);
-			}
-			else if (Pull)
-			{
-				await PullFromServer(apiStorage);
 			}
 			else
 			{
@@ -64,7 +64,7 @@ public class SyncCommand : ICommand
 
 		if (AppInfo.CurrentProfileId.HasValue && AppInfo.Todos != null)
 		{
-			apiStorage.SaveTodos(AppInfo.CurrentProfileId.Value, AppInfo.Todos);
+			apiStorage.SaveTodos(Guid.Empty, AppInfo.Todos);
 			Console.WriteLine($"✓ Отправлено {AppInfo.Todos.Count} задач");
 		}
 
@@ -78,55 +78,25 @@ public class SyncCommand : ICommand
 		var serverProfiles = apiStorage.LoadProfiles().ToList();
 		if (serverProfiles.Any())
 		{
-			Console.WriteLine($"Загружено {serverProfiles.Count} профилей с сервера");
-
 			AppInfo.AllProfiles = serverProfiles;
-
-			AppInfo.Storage.SaveProfiles(AppInfo.AllProfiles);
-			Console.WriteLine("✓ Локальные профили обновлены");
-		}
-		else
-		{
-			Console.WriteLine("На сервере нет данных профилей");
+			Console.WriteLine($"Загружено {serverProfiles.Count} профилей");
 		}
 
 		if (AppInfo.CurrentProfileId.HasValue)
 		{
-			var serverTodos = apiStorage.LoadTodos(AppInfo.CurrentProfileId.Value).ToList();
+			var serverTodos = apiStorage.LoadTodos(Guid.Empty).ToList();
 
 			if (serverTodos.Any())
 			{
-				Console.WriteLine($"Загружено {serverTodos.Count} задач с сервера");
+				var newTodoList = new TodoList(serverTodos);
 
-				if (AppInfo.Todos != null)
-				{
-					var oldTodos = AppInfo.Todos;
+				newTodoList.OnTodoAdded += OnTodoChanged;
+				newTodoList.OnTodoDeleted += OnTodoChanged;
+				newTodoList.OnTodoUpdated += OnTodoChanged;
+				newTodoList.OnStatusChanged += OnTodoChanged;
 
-					var newTodoList = new TodoList(serverTodos);
-
-					newTodoList.OnTodoAdded += OnTodoChanged;
-					newTodoList.OnTodoDeleted += OnTodoChanged;
-					newTodoList.OnTodoUpdated += OnTodoChanged;
-					newTodoList.OnStatusChanged += OnTodoChanged;
-
-					AppInfo.Todos = newTodoList;
-
-					AppInfo.Storage.SaveTodos(AppInfo.CurrentProfileId.Value, AppInfo.Todos);
-					Console.WriteLine("✓ Локальные задачи обновлены");
-				}
-				else
-				{
-					var newTodoList = new TodoList(serverTodos);
-					newTodoList.OnTodoAdded += OnTodoChanged;
-					newTodoList.OnTodoDeleted += OnTodoChanged;
-					newTodoList.OnTodoUpdated += OnTodoChanged;
-					newTodoList.OnStatusChanged += OnTodoChanged;
-					AppInfo.Todos = newTodoList;
-				}
-			}
-			else
-			{
-				Console.WriteLine("На сервере нет данных задач для текущего пользователя");
+				AppInfo.Todos = newTodoList;
+				Console.WriteLine($"Загружено {serverTodos.Count} задач");
 			}
 		}
 
@@ -135,13 +105,13 @@ public class SyncCommand : ICommand
 
 	private void OnTodoChanged(TodoItem item)
 	{
-		if (AppInfo.CurrentProfileId.HasValue && AppInfo.Todos != null)
+		if (AppInfo.CurrentProfileId.HasValue && AppInfo.Todos != null && AppInfo.Storage != null)
 		{
 			try
 			{
-				AppInfo.Storage.SaveTodos(AppInfo.CurrentProfileId.Value, AppInfo.Todos);
+				AppInfo.Storage.SaveTodos(Guid.Empty, AppInfo.Todos);
 			}
-			catch (StorageException ex)
+			catch (Exception ex)
 			{
 				Console.WriteLine($"\n[ВНИМАНИЕ] Ошибка автосохранения: {ex.Message}");
 			}

@@ -1,28 +1,26 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+
+namespace TodoList.Models;
 
 public class Profile
 {
-	public Guid Id { get; private set; }
-	public string Login { get; private set; }
-	public string Password { get; private set; }
-	public string FirstName { get; private set; }
-	public string LastName { get; private set; }
-	public int BirthYear { get; private set; }
+	[Key]
+	public int Id { get; set; }
 
-	public Profile(string firstName, string lastName, int birthYear, string login, string password, Guid id)
-	{
-		FirstName = firstName;
-		LastName = lastName;
-		BirthYear = birthYear;
-		Login = login;
-		Password = password;
-		Id = id;
-	}
+	[Required]
+	public string Login { get; set; } = string.Empty;
+	public string Password { get; set; } = string.Empty;
+	public string FirstName { get; set; } = string.Empty;
+	public string LastName { get; set; } = string.Empty;
+	public int BirthYear { get; set; }
+
+	public List<TodoItem> TodoItems { get; set; } = new();
 
 	public string GetInfo()
 	{
-		int currentYear = DateTime.Now.Year;
-		int age = currentYear - BirthYear;
+		int age = DateTime.Now.Year - BirthYear;
 		return $"{FirstName} {LastName}, возраст {age}, Логин: {Login}";
 	}
 }

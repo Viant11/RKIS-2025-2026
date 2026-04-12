@@ -1,5 +1,8 @@
 ﻿using Xunit;
 using System;
+using TodoList;
+using TodoList.Commands;
+using TodoList.Models;
 
 namespace ProjectTests
 {

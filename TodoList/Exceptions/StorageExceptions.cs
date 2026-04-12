@@ -1,5 +1,7 @@
 ﻿using System;
 
+namespace TodoList.Exceptions;
+
 public class StorageException : Exception
 {
 	public StorageException(string message, Exception innerException = null)

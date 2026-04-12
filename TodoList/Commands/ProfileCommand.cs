@@ -1,5 +1,9 @@
 ﻿using System;
 using System.Linq;
+using TodoList.Models;
+using TodoList.Services;
+
+namespace TodoList.Commands;
 
 public class ProfileCommand : ICommand
 {

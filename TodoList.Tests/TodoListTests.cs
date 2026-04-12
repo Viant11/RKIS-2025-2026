@@ -1,6 +1,8 @@
 ﻿using Xunit;
 using System;
 using System.Collections.Generic;
+using TodoList.Models;
+using TaskList = TodoList.TodoList;
 
 namespace ProjectTests
 {
@@ -10,7 +12,7 @@ namespace ProjectTests
 		public void Add_ShouldIncreaseCount_AndTriggerEvent()
 		{
 			// Arrange
-			var list = new TodoList();
+			var list = new TaskList();
 			var item = new TodoItem("Test");
 			bool eventTriggered = false;
 
@@ -32,7 +34,7 @@ namespace ProjectTests
 		{
 			// Arrange
 			var item = new TodoItem("Test");
-			var list = new TodoList(new List<TodoItem> { item });
+			var list = new TaskList(new List<TodoItem> { item });
 			bool eventTriggered = false;
 
 			list.OnTodoDeleted += (deletedItem) => {
@@ -51,7 +53,7 @@ namespace ProjectTests
 		public void Delete_InvalidIndex_ShouldThrowException()
 		{
 			// Arrange
-			var list = new TodoList();
+			var list = new TaskList();
 
 			// Act & Assert
 			Assert.Throws<ArgumentOutOfRangeException>(() => list.Delete(0));
@@ -64,7 +66,7 @@ namespace ProjectTests
 			var item1 = new TodoItem("1");
 			var item2 = new TodoItem("2");
 			var item3 = new TodoItem("3");
-			var list = new TodoList(new List<TodoItem> { item1, item2 });
+			var list = new TaskList(new List<TodoItem> { item1, item2 });
 
 			// Act
 			list.Insert(1, item3);
@@ -80,7 +82,7 @@ namespace ProjectTests
 		public void GetCompletedCount_ShouldReturnCorrectNumber()
 		{
 			// Arrange
-			var list = new TodoList();
+			var list = new TaskList();
 			var t1 = new TodoItem("1");
 			var t2 = new TodoItem("2");
 			t2.UpdateStatus(TodoStatus.Completed);
@@ -103,7 +105,7 @@ namespace ProjectTests
 		{
 			// Arrange
 			var item = new TodoItem("Test");
-			var list = new TodoList(new List<TodoItem> { item });
+			var list = new TaskList(new List<TodoItem> { item });
 
 			// Act
 			list.SetStatus(0, TodoStatus.Failed);

@@ -1,6 +1,9 @@
 ﻿using Xunit;
 using System;
 using System.Linq;
+using TodoList;
+using TodoList.Commands;
+using TodoList.Models;
 
 namespace ProjectTests
 {

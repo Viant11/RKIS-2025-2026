@@ -4,6 +4,10 @@ using System.Linq;
 using System.Text;
 using TodoList.Models;
 using TodoList.Services;
+using TodoList.Data;
+using TodoList.Commands;
+
+namespace TodoList;
 
 internal class Program
 {
@@ -19,15 +23,41 @@ internal class Program
 		}
 
 		Console.WriteLine("Работу выполнили: Соловьёв Евгений и Тареев Юрий");
-		Console.WriteLine("Хранилище: SQLite (EF Core)");
+
+		Console.WriteLine("\nВыберите режим хранения данных:");
+		Console.WriteLine("1 - Локальное файловое хранилище (FileManager)");
+		Console.WriteLine("2 - Удаленное API-хранилище (ApiDataStorage)");
+		Console.WriteLine("3 - База данных SQLite (Entity Framework Core)");
+		Console.Write("Ваш выбор: ");
+
+		string mode = Console.ReadLine();
 
 		try
 		{
-			AppInfo.AllProfiles = _profileRepo.GetAll();
+			switch (mode)
+			{
+				case "1":
+					Console.WriteLine("Выбран режим: Файлы");
+					break;
+				case "2":
+					AppInfo.Storage = new ApiDataStorage();
+					Console.WriteLine("Выбран режим: API");
+					break;
+				case "3":
+				default:
+					AppInfo.Storage = new SqliteDataStorage();
+					Console.WriteLine("Выбран режим: SQLite");
+					break;
+			}
+
+			if (AppInfo.Storage != null)
+			{
+				AppInfo.AllProfiles = AppInfo.Storage.LoadProfiles().ToList();
+			}
 		}
 		catch (Exception ex)
 		{
-			Console.WriteLine($"КРИТИЧЕСКАЯ ОШИБКА БД: {ex.Message}");
+			Console.WriteLine($"Ошибка инициализации: {ex.Message}");
 			return;
 		}
 
@@ -52,7 +82,7 @@ internal class Program
 		}
 		catch (Exception ex)
 		{
-			Console.WriteLine($"Критическая ошибка приложения: {ex.Message}");
+			Console.WriteLine($"Критическая ошибка: {ex.Message}");
 		}
 	}
 
@@ -60,26 +90,14 @@ internal class Program
 	{
 		while (AppInfo.CurrentProfileId == null)
 		{
-			Console.WriteLine("\nВойти в существующий профиль? [y/n] (или 'exit' для выхода)");
+			Console.WriteLine("\nВойти в существующий профиль? [y/n] (exit для выхода)");
 			string choice = Console.ReadLine()?.ToLower();
 
-			try
-			{
-				switch (choice)
-				{
-					case "y": LoginUser(); break;
-					case "n": CreateNewProfile(); break;
-					case "exit": AppInfo.CurrentProfileId = -1; break;
-					case null: AppInfo.CurrentProfileId = -1; break;
-					default: Console.WriteLine("Неверный ввод. Попробуйте еще раз."); break;
-				}
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine($"Ошибка: {ex.Message}");
-			}
+			if (choice == "y") LoginUser();
+			else if (choice == "n") CreateNewProfile();
+			else if (choice == "exit") AppInfo.CurrentProfileId = -1;
+			else Console.WriteLine("Неверный ввод.");
 		}
-
 		if (AppInfo.CurrentProfileId == -1) AppInfo.CurrentProfileId = null;
 	}
 
@@ -94,16 +112,14 @@ internal class Program
 
 		if (foundProfile == null)
 		{
-			throw new Exception("Неверный логин или пароль.");
+			Console.WriteLine("Ошибка: Неверный логин или пароль.");
+			return;
 		}
 
 		var loadedTasks = _todoRepo.GetByProfile(foundProfile.Id);
 		var userTodos = new TodoList(loadedTasks.ToList());
 
-		userTodos.OnTodoAdded += (item) => {
-			item.ProfileId = foundProfile.Id;
-			_todoRepo.Add(item);
-		};
+		userTodos.OnTodoAdded += (item) => { item.ProfileId = foundProfile.Id; _todoRepo.Add(item); };
 		userTodos.OnTodoDeleted += (item) => _todoRepo.Delete(item.Id);
 		userTodos.OnTodoUpdated += (item) => _todoRepo.Update(item);
 		userTodos.OnStatusChanged += (item) => _todoRepo.Update(item);
@@ -118,30 +134,18 @@ internal class Program
 
 	private static void CreateNewProfile()
 	{
-		Console.Write("Введите новый логин: ");
+		Console.Write("Новый логин: ");
 		string login = Console.ReadLine();
+		if (AppInfo.AllProfiles.Any(p => p.Login == login)) { Console.WriteLine("Логин занят!"); return; }
 
-		if (string.IsNullOrWhiteSpace(login))
-			throw new Exception("Логин не может быть пустым.");
-
-		if (AppInfo.AllProfiles.Any(p => p.Login.Equals(login, StringComparison.OrdinalIgnoreCase)))
-			throw new Exception($"Логин '{login}' уже занят.");
-
-		Console.Write("Введите пароль: ");
+		Console.Write("Пароль: ");
 		string password = Console.ReadLine();
-		Console.Write("Введите ваше имя: ");
+		Console.Write("Имя: ");
 		string firstName = Console.ReadLine();
-		Console.Write("Введите вашу фамилию: ");
+		Console.Write("Фамилия: ");
 		string lastName = Console.ReadLine();
-
-		int birthYear;
-		while (true)
-		{
-			Console.Write("Введите год рождения: ");
-			if (int.TryParse(Console.ReadLine(), out birthYear) && birthYear > 1900 && birthYear <= DateTime.Now.Year)
-				break;
-			Console.WriteLine("Некорректный год рождения.");
-		}
+		Console.Write("Год рождения: ");
+		int.TryParse(Console.ReadLine(), out int year);
 
 		var newProfile = new Profile
 		{
@@ -149,35 +153,13 @@ internal class Program
 			Password = password,
 			FirstName = firstName,
 			LastName = lastName,
-			BirthYear = birthYear
+			BirthYear = year
 		};
 
-		try
-		{
-			_profileRepo.Add(newProfile);
-			AppInfo.AllProfiles.Add(newProfile);
+		_profileRepo.Add(newProfile);
+		AppInfo.AllProfiles.Add(newProfile);
 
-			AppInfo.CurrentProfileId = newProfile.Id;
-
-			var newUserTodos = new TodoList();
-			newUserTodos.OnTodoAdded += (item) => {
-				item.ProfileId = newProfile.Id;
-				_todoRepo.Add(item);
-			};
-			newUserTodos.OnTodoDeleted += (item) => _todoRepo.Delete(item.Id);
-			newUserTodos.OnTodoUpdated += (item) => _todoRepo.Update(item);
-			newUserTodos.OnStatusChanged += (item) => _todoRepo.Update(item);
-
-			AppInfo.Todos = newUserTodos;
-			AppInfo.UndoStack.Clear();
-			AppInfo.RedoStack.Clear();
-
-			Console.WriteLine("Новый профиль успешно создан и сохранен в БД!");
-		}
-		catch (Exception ex)
-		{
-			Console.WriteLine($"Ошибка при сохранении профиля: {ex.Message}");
-		}
+		Console.WriteLine("Профиль создан. Теперь войдите в него.");
 	}
 
 	private static void RunUserSession()
@@ -187,7 +169,6 @@ internal class Program
 		{
 			Console.Write("> ");
 			string input = Console.ReadLine();
-			if (input == null) break;
 			if (string.IsNullOrWhiteSpace(input)) continue;
 
 			try
@@ -195,9 +176,9 @@ internal class Program
 				ICommand command = CommandParser.Parse(input);
 				command.Execute();
 
-				if (command is IUndo undoableCommand)
+				if (command is IUndo undoable)
 				{
-					AppInfo.UndoStack.Push(undoableCommand);
+					AppInfo.UndoStack.Push(undoable);
 					AppInfo.RedoStack.Clear();
 				}
 
@@ -205,7 +186,7 @@ internal class Program
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine($"Ошибка: {ex.Message}");
+				Console.WriteLine($"Ошибка команды: {ex.Message}");
 			}
 		}
 		Console.WriteLine("Вы вышли из профиля.");

@@ -1,10 +1,29 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace TodoList.Models;
 
 public class TodoItem
 {
-	public string Text { get; private set; }
-	public TodoStatus Status { get; private set; }
-	public DateTime LastUpdate { get; private set; }
+	[Key]
+	public int Id { get; set; }
+
+	[Required]
+	public string Text { get; set; } = string.Empty;
+
+	public TodoStatus Status { get; set; }
+
+	public DateTime LastUpdate { get; set; }
+
+	public int ProfileId { get; set; }
+
+	[ForeignKey("ProfileId")]
+	public Profile? Profile { get; set; }
+
+	public TodoItem()
+	{
+	}
 
 	public TodoItem(string text)
 	{
@@ -20,6 +39,7 @@ public class TodoItem
 		LastUpdate = lastUpdate;
 	}
 
+
 	public void UpdateStatus(TodoStatus newStatus)
 	{
 		Status = newStatus;
@@ -32,29 +52,26 @@ public class TodoItem
 		LastUpdate = DateTime.Now;
 	}
 
-	private string GetStatusText()
-	{
-		switch (Status)
-		{
-			case TodoStatus.NotStarted: return "Не начато";
-			case TodoStatus.InProgress: return "В процессе";
-			case TodoStatus.Completed: return "Выполнено";
-			case TodoStatus.Postponed: return "Отложено";
-			case TodoStatus.Failed: return "Провалено";
-			default: return "Неизвестно";
-		}
-	}
-
 	public string GetShortInfo()
 	{
 		string cleanText = Text.Replace("\n", " ").Replace("\r", " ");
 		string shortText = cleanText.Length > 30 ? cleanText.Substring(0, 27) + "..." : cleanText;
-		string status = GetStatusText();
-		return $"{shortText.PadRight(33)} | {status.PadRight(12)} | {LastUpdate:dd.MM.yyyy HH:mm}";
+
+		string statusText = Status switch
+		{
+			TodoStatus.NotStarted => "Не начато",
+			TodoStatus.InProgress => "В процессе",
+			TodoStatus.Completed => "Выполнено",
+			TodoStatus.Postponed => "Отложено",
+			TodoStatus.Failed => "Провалено",
+			_ => Status.ToString()
+		};
+
+		return $"{shortText.PadRight(33)} | {statusText.PadRight(12)} | {LastUpdate:dd.MM.yyyy HH:mm}";
 	}
 
 	public string GetFullInfo()
 	{
-		return $"Текст: {Text}\nСтатус: {GetStatusText()}\nДата последнего изменения: {LastUpdate:dd.MM.yyyy HH:mm}";
+		return $"Текст: {Text}\nСтатус: {Status}\nДата последнего изменения: {LastUpdate:dd.MM.yyyy HH:mm}";
 	}
 }
