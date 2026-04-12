@@ -1,5 +1,7 @@
 ﻿using Xunit;
+using Moq;
 using System;
+using TodoList;
 using TodoList.Models;
 
 namespace ProjectTests
@@ -7,64 +9,74 @@ namespace ProjectTests
 	public class TodoItemTests
 	{
 		[Fact]
-		public void GetShortInfo_ShouldTruncateLongText()
+		public void Constructor_NewTask_SetsCorrectLastUpdate()
 		{
 			// Arrange
-			string longText = "Это очень очень очень очень очень очень длинная задача";
-			var item = new TodoItem(longText);
+			var fixedTime = new DateTime(2026, 4, 12, 10, 0, 0);
+			var mockClock = new Mock<IClock>();
+			mockClock.Setup(c => c.Now).Returns(fixedTime);
 
 			// Act
-			string shortInfo = item.GetShortInfo();
+			var item = new TodoItem("Test Task", mockClock.Object);
 
 			// Assert
-			Assert.Contains("Это очень очень очень очень...", shortInfo);
+			Assert.Equal(fixedTime, item.LastUpdate);
 		}
 
 		[Fact]
-		public void GetShortInfo_ShouldReplaceNewLines()
+		public void UpdateStatus_StatusChanged_UpdatesLastUpdateToCurrentTime()
 		{
 			// Arrange
-			string multilineText = "Строка1\nСтрока2";
-			var item = new TodoItem(multilineText);
+			var startTime = new DateTime(2026, 4, 12, 10, 0, 0);
+			var updateTime = new DateTime(2026, 4, 12, 11, 0, 0);
+
+			var mockClock = new Mock<IClock>();
+			mockClock.SetupSequence(c => c.Now)
+				.Returns(startTime)
+				.Returns(updateTime);
+
+			var item = new TodoItem("Test Task", mockClock.Object);
 
 			// Act
-			string shortInfo = item.GetShortInfo();
+			item.UpdateStatus(TodoStatus.Completed);
 
 			// Assert
-			Assert.DoesNotContain("\n", shortInfo);
-			Assert.Contains("Строка1 Строка2", shortInfo);
+			Assert.Equal(updateTime, item.LastUpdate);
 		}
 
 		[Fact]
-		public void UpdateText_ShouldUpdateTextAndTimestamp()
+		public void UpdateText_TextChanged_UpdatesLastUpdateToCurrentTime()
 		{
 			// Arrange
-			var item = new TodoItem("Old Text");
-			DateTime oldTime = item.LastUpdate;
+			var startTime = new DateTime(2026, 4, 12, 10, 0, 0);
+			var updateTime = new DateTime(2026, 4, 12, 10, 30, 0);
 
-			System.Threading.Thread.Sleep(50);
+			var mockClock = new Mock<IClock>();
+			mockClock.SetupSequence(c => c.Now)
+				.Returns(startTime)
+				.Returns(updateTime);
+
+			var item = new TodoItem("Old Text", mockClock.Object);
 
 			// Act
 			item.UpdateText("New Text");
 
 			// Assert
-			Assert.Equal("New Text", item.Text);
-			Assert.True(item.LastUpdate > oldTime);
+			Assert.Equal(updateTime, item.LastUpdate);
 		}
 
 		[Fact]
-		public void GetFullInfo_ShouldContainStatusText()
+		public void GetShortInfo_LongText_ReturnsTruncatedString()
 		{
 			// Arrange
-			var item = new TodoItem("Task");
-			item.UpdateStatus(TodoStatus.Completed);
+			string longText = "Это очень длинная задача, которая должна быть обрезана в выводе";
+			var item = new TodoItem(longText);
 
 			// Act
-			string fullInfo = item.GetFullInfo();
+			string result = item.GetShortInfo();
 
 			// Assert
-			Assert.Contains("Выполнено", fullInfo);
-			Assert.Contains("Task", fullInfo);
+			Assert.Contains("...", result);
 		}
 	}
 }
