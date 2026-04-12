@@ -21,53 +21,45 @@ public class TodoItem
 	[ForeignKey("ProfileId")]
 	public Profile? Profile { get; set; }
 
-	public TodoItem()
-	{
-	}
+	[NotMapped]
+	private readonly IClock _clock;
 
-	public TodoItem(string text)
+	public TodoItem() : this(string.Empty) { }
+
+	public TodoItem(string text, IClock? clock = null)
 	{
+		_clock = clock ?? new SystemClock();
+
 		Text = text;
 		Status = TodoStatus.NotStarted;
-		LastUpdate = DateTime.Now;
+		LastUpdate = _clock.Now;
 	}
 
-	public TodoItem(string text, TodoStatus status, DateTime lastUpdate)
+	public TodoItem(string text, TodoStatus status, DateTime lastUpdate, IClock? clock = null)
 	{
+		_clock = clock ?? new SystemClock();
 		Text = text;
 		Status = status;
 		LastUpdate = lastUpdate;
 	}
 
-
 	public void UpdateStatus(TodoStatus newStatus)
 	{
 		Status = newStatus;
-		LastUpdate = DateTime.Now;
+		LastUpdate = _clock.Now;
 	}
 
 	public void UpdateText(string newText)
 	{
 		Text = newText;
-		LastUpdate = DateTime.Now;
+		LastUpdate = _clock.Now;
 	}
 
 	public string GetShortInfo()
 	{
 		string cleanText = Text.Replace("\n", " ").Replace("\r", " ");
 		string shortText = cleanText.Length > 30 ? cleanText.Substring(0, 27) + "..." : cleanText;
-
-		string statusText = Status switch
-		{
-			TodoStatus.NotStarted => "Не начато",
-			TodoStatus.InProgress => "В процессе",
-			TodoStatus.Completed => "Выполнено",
-			TodoStatus.Postponed => "Отложено",
-			TodoStatus.Failed => "Провалено",
-			_ => Status.ToString()
-		};
-
-		return $"{shortText.PadRight(33)} | {statusText.PadRight(12)} | {LastUpdate:dd.MM.yyyy HH:mm}";
+		return $"{shortText.PadRight(33)} | {Status.ToString().PadRight(12)} | {LastUpdate:dd.MM.yyyy HH:mm}";
 	}
 
 	public string GetFullInfo()
