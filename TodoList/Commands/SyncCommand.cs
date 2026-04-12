@@ -11,6 +11,8 @@ public class SyncCommand : ICommand
 	public bool Pull { get; set; }
 	public bool Push { get; set; }
 
+	public IDataStorage? ExternalStorage { get; set; }
+
 	public void Execute()
 	{
 		if (!AppInfo.CurrentProfileId.HasValue)
@@ -24,16 +26,18 @@ public class SyncCommand : ICommand
 
 	private async Task ExecuteAsync()
 	{
-		var apiStorage = new ApiDataStorage();
+		IDataStorage apiStorage = ExternalStorage ?? new ApiDataStorage();
 
-		Console.WriteLine("Проверка доступности сервера...");
-		if (!await apiStorage.IsServerAvailableAsync())
+		if (apiStorage is ApiDataStorage realApi)
 		{
-			Console.WriteLine("Ошибка: сервер недоступен.");
-			return;
+			Console.WriteLine("Проверка доступности сервера...");
+			if (!await realApi.IsServerAvailableAsync())
+			{
+				Console.WriteLine("Ошибка: сервер недоступен.");
+				return;
+			}
+			Console.WriteLine("Сервер доступен. Начинаю синхронизацию...");
 		}
-
-		Console.WriteLine("Сервер доступен. Начинаю синхронизацию...");
 
 		try
 		{
@@ -52,30 +56,30 @@ public class SyncCommand : ICommand
 		}
 	}
 
-	private async Task PushToServer(ApiDataStorage apiStorage)
+	private async Task PushToServer(IDataStorage storage)
 	{
 		Console.WriteLine("Отправка данных на сервер...");
 
 		if (AppInfo.AllProfiles != null)
 		{
-			apiStorage.SaveProfiles(AppInfo.AllProfiles);
+			storage.SaveProfiles(AppInfo.AllProfiles);
 			Console.WriteLine($"✓ Отправлено {AppInfo.AllProfiles.Count} профилей");
 		}
 
 		if (AppInfo.CurrentProfileId.HasValue && AppInfo.Todos != null)
 		{
-			apiStorage.SaveTodos(Guid.Empty, AppInfo.Todos);
+			storage.SaveTodos(Guid.Empty, AppInfo.Todos);
 			Console.WriteLine($"✓ Отправлено {AppInfo.Todos.Count} задач");
 		}
 
 		Console.WriteLine("Синхронизация (push) завершена успешно.");
 	}
 
-	private async Task PullFromServer(ApiDataStorage apiStorage)
+	private async Task PullFromServer(IDataStorage storage)
 	{
 		Console.WriteLine("Загрузка данных с сервера...");
 
-		var serverProfiles = apiStorage.LoadProfiles().ToList();
+		var serverProfiles = storage.LoadProfiles().ToList();
 		if (serverProfiles.Any())
 		{
 			AppInfo.AllProfiles = serverProfiles;
@@ -84,7 +88,7 @@ public class SyncCommand : ICommand
 
 		if (AppInfo.CurrentProfileId.HasValue)
 		{
-			var serverTodos = apiStorage.LoadTodos(Guid.Empty).ToList();
+			var serverTodos = storage.LoadTodos(Guid.Empty).ToList();
 
 			if (serverTodos.Any())
 			{

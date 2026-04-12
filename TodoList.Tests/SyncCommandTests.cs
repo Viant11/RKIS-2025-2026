@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using TodoList;
 using TodoList.Models;
 using TodoList.Commands;
+using TaskList = TodoList.TodoList;
 
 namespace ProjectTests
 {
@@ -15,17 +16,47 @@ namespace ProjectTests
 		{
 			// Arrange
 			var mockStorage = new Mock<IDataStorage>();
-			AppInfo.Storage = mockStorage.Object;
+
 			AppInfo.CurrentProfileId = 1;
 			AppInfo.Todos = new TaskList();
 
-			var command = new SyncCommand { Push = true };
+			var command = new SyncCommand
+			{
+				Push = true,
+				ExternalStorage = mockStorage.Object
+			};
 
 			// Act
 			command.Execute();
 
 			// Assert
-			mockStorage.Verify(s => s.SaveTodos(Guid.Empty, It.IsAny<IEnumerable<TodoItem>>()), Times.AtLeastOnce());
+			mockStorage.Verify(s => s.SaveTodos(
+				It.IsAny<Guid>(),
+				It.IsAny<IEnumerable<TodoItem>>()),
+				Times.AtLeastOnce());
+		}
+
+		[Fact]
+		public void SyncCommand_NoProfile_DoesNotCallStorage()
+		{
+			// Arrange
+			var mockStorage = new Mock<IDataStorage>();
+			AppInfo.CurrentProfileId = null;
+
+			var command = new SyncCommand
+			{
+				Push = true,
+				ExternalStorage = mockStorage.Object
+			};
+
+			// Act
+			command.Execute();
+
+			// Assert
+			mockStorage.Verify(s => s.SaveTodos(
+				It.IsAny<Guid>(),
+				It.IsAny<IEnumerable<TodoItem>>()),
+				Times.Never());
 		}
 	}
 }
