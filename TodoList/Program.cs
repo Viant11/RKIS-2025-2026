@@ -1,13 +1,14 @@
 ﻿using System;
-using System.IO;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using TodoList.Models;
+using TodoList.Services;
 
 internal class Program
 {
-	private static string DataDir;
-	private static string ProfileFilePath;
+	private static readonly ProfileRepository _profileRepo = new();
+	private static readonly TodoRepository _todoRepo = new();
 
 	private static void Main(string[] args)
 	{
@@ -18,41 +19,15 @@ internal class Program
 		}
 
 		Console.WriteLine("Работу выполнили: Соловьёв Евгений и Тареев Юрий");
-
-		DataDir = "data";
-		ProfileFilePath = Path.Combine(DataDir, "profile.csv");
-
-		FileManager fileManager = new FileManager(DataDir, ProfileFilePath);
-		AppInfo.Storage = fileManager;
+		Console.WriteLine("Хранилище: SQLite (EF Core)");
 
 		try
 		{
-			fileManager.EnsureDataDirectory();
-
-			AppInfo.AllProfiles = AppInfo.Storage.LoadProfiles().ToList();
-		}
-		catch (SecurityStorageException)
-		{
-			Console.WriteLine("КРИТИЧЕСКАЯ ОШИБКА: Не удалось расшифровать файл профилей.");
-			Console.WriteLine("Возможно, ключ шифрования был изменен или файл поврежден.");
-			Console.WriteLine("Приложение будет завершено.");
-			return;
-		}
-		catch (DataCorruptionException ex)
-		{
-			Console.WriteLine($"КРИТИЧЕСКАЯ ОШИБКА: Файл профилей поврежден. {ex.Message}");
-			Console.WriteLine("Исправьте файл вручную или удалите его для сброса.");
-			return;
-		}
-		catch (FileSystemException ex)
-		{
-			Console.WriteLine($"КРИТИЧЕСКАЯ ОШИБКА ДОСТУПА: {ex.Message}");
-			Console.WriteLine($"Путь: {ex.FilePath}");
-			return;
+			AppInfo.AllProfiles = _profileRepo.GetAll();
 		}
 		catch (Exception ex)
 		{
-			Console.WriteLine($"Неожиданная ошибка при запуске: {ex.Message}");
+			Console.WriteLine($"КРИТИЧЕСКАЯ ОШИБКА БД: {ex.Message}");
 			return;
 		}
 
@@ -94,44 +69,18 @@ internal class Program
 				{
 					case "y": LoginUser(); break;
 					case "n": CreateNewProfile(); break;
-					case "exit": AppInfo.CurrentProfileId = Guid.Empty; break;
-					case null: AppInfo.CurrentProfileId = Guid.Empty; break;
+					case "exit": AppInfo.CurrentProfileId = -1; break;
+					case null: AppInfo.CurrentProfileId = -1; break;
 					default: Console.WriteLine("Неверный ввод. Попробуйте еще раз."); break;
 				}
-			}
-			catch (AuthenticationException ex)
-			{
-				Console.WriteLine($"Ошибка входа: {ex.Message}");
-			}
-			catch (DuplicateLoginException ex)
-			{
-				Console.WriteLine($"Ошибка регистрации: {ex.Message}");
-			}
-			catch (InvalidArgumentException ex)
-			{
-				Console.WriteLine($"Ошибка ввода: {ex.Message}");
 			}
 			catch (Exception ex)
 			{
 				Console.WriteLine($"Ошибка: {ex.Message}");
 			}
 		}
-		if (AppInfo.CurrentProfileId == Guid.Empty) AppInfo.CurrentProfileId = null;
-	}
 
-	private static void OnTodoChanged(TodoItem item)
-	{
-		if (AppInfo.CurrentProfileId.HasValue && AppInfo.Todos != null)
-		{
-			try
-			{
-				AppInfo.Storage.SaveTodos(AppInfo.CurrentProfileId.Value, AppInfo.Todos);
-			}
-			catch (StorageException ex)
-			{
-				Console.WriteLine($"\n[ВНИМАНИЕ] Ошибка автосохранения: {ex.Message}");
-			}
-		}
+		if (AppInfo.CurrentProfileId == -1) AppInfo.CurrentProfileId = null;
 	}
 
 	private static void LoginUser()
@@ -145,38 +94,26 @@ internal class Program
 
 		if (foundProfile == null)
 		{
-			throw new AuthenticationException("Неверный логин или пароль.");
+			throw new Exception("Неверный логин или пароль.");
 		}
 
-		try
-		{
-			var loadedTasks = AppInfo.Storage.LoadTodos(foundProfile.Id);
-			var userTodos = new TodoList(loadedTasks.ToList());
+		var loadedTasks = _todoRepo.GetByProfile(foundProfile.Id);
+		var userTodos = new TodoList(loadedTasks.ToList());
 
-			userTodos.OnTodoAdded += OnTodoChanged;
-			userTodos.OnTodoDeleted += OnTodoChanged;
-			userTodos.OnTodoUpdated += OnTodoChanged;
-			userTodos.OnStatusChanged += OnTodoChanged;
+		userTodos.OnTodoAdded += (item) => {
+			item.ProfileId = foundProfile.Id;
+			_todoRepo.Add(item);
+		};
+		userTodos.OnTodoDeleted += (item) => _todoRepo.Delete(item.Id);
+		userTodos.OnTodoUpdated += (item) => _todoRepo.Update(item);
+		userTodos.OnStatusChanged += (item) => _todoRepo.Update(item);
 
-			AppInfo.Todos = userTodos;
-			AppInfo.CurrentProfileId = foundProfile.Id;
+		AppInfo.Todos = userTodos;
+		AppInfo.CurrentProfileId = foundProfile.Id;
 
-			AppInfo.UndoStack.Clear();
-			AppInfo.RedoStack.Clear();
-			Console.WriteLine($"Добро пожаловать, {foundProfile.FirstName}!");
-		}
-		catch (SecurityStorageException)
-		{
-			Console.WriteLine("Ошибка: Не удалось расшифровать список задач. Возможно, файл поврежден.");
-		}
-		catch (DataCorruptionException ex)
-		{
-			Console.WriteLine($"Ошибка: Файл задач поврежден. {ex.Message}");
-		}
-		catch (StorageException ex)
-		{
-			Console.WriteLine($"Ошибка хранилища: {ex.Message}");
-		}
+		AppInfo.UndoStack.Clear();
+		AppInfo.RedoStack.Clear();
+		Console.WriteLine($"Добро пожаловать, {foundProfile.FirstName}!");
 	}
 
 	private static void CreateNewProfile()
@@ -185,12 +122,10 @@ internal class Program
 		string login = Console.ReadLine();
 
 		if (string.IsNullOrWhiteSpace(login))
-			throw new InvalidArgumentException("Логин не может быть пустым.");
+			throw new Exception("Логин не может быть пустым.");
 
 		if (AppInfo.AllProfiles.Any(p => p.Login.Equals(login, StringComparison.OrdinalIgnoreCase)))
-		{
-			throw new DuplicateLoginException($"Логин '{login}' уже занят.");
-		}
+			throw new Exception($"Логин '{login}' уже занят.");
 
 		Console.Write("Введите пароль: ");
 		string password = Console.ReadLine();
@@ -203,47 +138,51 @@ internal class Program
 		while (true)
 		{
 			Console.Write("Введите год рождения: ");
-			string input = Console.ReadLine();
-			if (int.TryParse(input, out birthYear) && birthYear > 1900 && birthYear <= DateTime.Now.Year)
+			if (int.TryParse(Console.ReadLine(), out birthYear) && birthYear > 1900 && birthYear <= DateTime.Now.Year)
 				break;
-			Console.WriteLine("Некорректный год рождения. Введите число от 1900 до текущего года.");
+			Console.WriteLine("Некорректный год рождения.");
 		}
 
-		var newProfile = new Profile(firstName, lastName, birthYear, login, password, Guid.NewGuid());
+		var newProfile = new Profile
+		{
+			Login = login,
+			Password = password,
+			FirstName = firstName,
+			LastName = lastName,
+			BirthYear = birthYear
+		};
 
 		try
 		{
+			_profileRepo.Add(newProfile);
 			AppInfo.AllProfiles.Add(newProfile);
-			AppInfo.Storage.SaveProfiles(AppInfo.AllProfiles);
 
 			AppInfo.CurrentProfileId = newProfile.Id;
-			var newUserTodos = new TodoList();
 
-			newUserTodos.OnTodoAdded += OnTodoChanged;
-			newUserTodos.OnTodoDeleted += OnTodoChanged;
-			newUserTodos.OnTodoUpdated += OnTodoChanged;
-			newUserTodos.OnStatusChanged += OnTodoChanged;
+			var newUserTodos = new TodoList();
+			newUserTodos.OnTodoAdded += (item) => {
+				item.ProfileId = newProfile.Id;
+				_todoRepo.Add(item);
+			};
+			newUserTodos.OnTodoDeleted += (item) => _todoRepo.Delete(item.Id);
+			newUserTodos.OnTodoUpdated += (item) => _todoRepo.Update(item);
+			newUserTodos.OnStatusChanged += (item) => _todoRepo.Update(item);
 
 			AppInfo.Todos = newUserTodos;
-
-			AppInfo.Storage.SaveTodos(newProfile.Id, AppInfo.Todos);
-
 			AppInfo.UndoStack.Clear();
 			AppInfo.RedoStack.Clear();
-			Console.WriteLine("Новый профиль успешно создан!");
+
+			Console.WriteLine("Новый профиль успешно создан и сохранен в БД!");
 		}
-		catch (StorageException ex)
+		catch (Exception ex)
 		{
-			AppInfo.AllProfiles.Remove(newProfile);
-			AppInfo.CurrentProfileId = null;
-			AppInfo.Todos = null;
-			Console.WriteLine($"Ошибка при создании профиля (запись на диск): {ex.Message}");
+			Console.WriteLine($"Ошибка при сохранении профиля: {ex.Message}");
 		}
 	}
 
 	private static void RunUserSession()
 	{
-		Console.WriteLine("Сессия пользователя запущена. Введите 'help' для списка команд.");
+		Console.WriteLine("Сессия запущена. Введите 'help' для списка команд.");
 		while (AppInfo.CurrentProfileId.HasValue)
 		{
 			Console.Write("> ");
@@ -256,13 +195,13 @@ internal class Program
 				ICommand command = CommandParser.Parse(input);
 				command.Execute();
 
-				if (!AppInfo.CurrentProfileId.HasValue) break;
-
 				if (command is IUndo undoableCommand)
 				{
 					AppInfo.UndoStack.Push(undoableCommand);
 					AppInfo.RedoStack.Clear();
 				}
+
+				if (!AppInfo.CurrentProfileId.HasValue) break;
 			}
 			catch (Exception ex)
 			{
